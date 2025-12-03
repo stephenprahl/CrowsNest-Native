@@ -120,7 +120,7 @@ export default function Index() {
             onChangeText={setQuery}
             style={styles.searchInput}
           />
-          <TouchableOpacity style={styles.qrBtn} onPress={() => {}}>
+          <TouchableOpacity style={styles.qrBtn} onPress={() => { }}>
             <MaterialIcons name="qr-code-scanner" size={20} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
