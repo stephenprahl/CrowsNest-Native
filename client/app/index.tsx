@@ -173,7 +173,6 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => router.push('/refresh')}
             >
               <MaterialIcons name="refresh" size={18} color="#fff" />
               <Text style={styles.menuItemText}>Refresh</Text>
