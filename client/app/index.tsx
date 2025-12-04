@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 type Project = {
   id: string;
@@ -34,6 +35,8 @@ export default function Index() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanning, setScanning] = useState(false);
   const [BarcodeModule, setBarcodeModule] = useState<any | null>(null);
+
+  const router = useRouter();
 
   async function openScanner() {
     try {
@@ -98,7 +101,7 @@ export default function Index() {
           <Text style={styles.owner}>P&R TECH</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
             <MaterialIcons name="notifications-none" size={22} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
@@ -140,10 +143,8 @@ export default function Index() {
           <View style={styles.menuBox}>
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                setMenuOpen(false);
-                console.log('Profile');
-              }}
+              onPress={() => router.push('/profile')
+              }
             >
               <MaterialIcons name="person" size={18} color="#fff" />
               <Text style={styles.menuItemText}>Profile</Text>
@@ -151,10 +152,7 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                setMenuOpen(false);
-                console.log('Data');
-              }}
+              onPress={() => router.push('/data')}
             >
               <MaterialIcons name="cloud" size={18} color="#fff" />
               <Text style={styles.menuItemText}>Data</Text>
@@ -162,10 +160,7 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                setMenuOpen(false);
-                console.log('Support');
-              }}
+              onPress={() => router.push('/support')}
             >
               <MaterialIcons name="support-agent" size={18} color="#fff" />
               <Text style={styles.menuItemText}>Support</Text>
@@ -173,10 +168,7 @@ export default function Index() {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => {
-                setMenuOpen(false);
-                console.log('Refresh');
-              }}
+              onPress={() => router.push('/refresh')}
             >
               <MaterialIcons name="refresh" size={18} color="#fff" />
               <Text style={styles.menuItemText}>Refresh</Text>
