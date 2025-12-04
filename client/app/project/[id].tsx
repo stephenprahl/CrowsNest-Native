@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import {
     Animated,
     Dimensions,
+    Image,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -32,11 +34,27 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
 
+type Plan = {
+    id: string;
+    name: string;
+    image: string;
+};
+
+const SAMPLE_PLANS: Plan[] = [
+    { id: '1', name: 'Floor Plan - Level 1', image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&h=300&fit=crop' },
+    { id: '2', name: 'Floor Plan - Level 2', image: 'https://images.unsplash.com/photo-1574691250077-03a929faece5?w=400&h=300&fit=crop' },
+    { id: '3', name: 'Electrical Layout', image: 'https://images.unsplash.com/photo-1581094794329-c8112d89af12?w=400&h=300&fit=crop' },
+    { id: '4', name: 'Plumbing Layout', image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop' },
+    { id: '5', name: 'HVAC System', image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop' },
+];
+
 export default function ProjectHomeScreen() {
     const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState('plans');
+    const [plansDropdownOpen, setPlansDropdownOpen] = useState(false);
+    const [plans] = useState(SAMPLE_PLANS);
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
 
     const openSidebar = () => {
@@ -65,10 +83,47 @@ export default function ProjectHomeScreen() {
         switch (activeSection) {
             case 'plans':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="floor-plan" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Plans</Text>
-                        <Text style={styles.contentSubtitle}>Project plans and blueprints</Text>
+                    <View style={styles.plansContainer}>
+                        <TouchableOpacity
+                            style={styles.plansDropdown}
+                            onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.plansDropdownLeft}>
+                                <MaterialCommunityIcons name="folder-outline" size={20} color="#9aa0a6" />
+                                <Text style={styles.plansDropdownText}>All Plans</Text>
+                            </View>
+                            <View style={styles.plansDropdownRight}>
+                                <Text style={styles.plansCount}>({plans.length} plans)</Text>
+                                <MaterialCommunityIcons
+                                    name={plansDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                                    size={20}
+                                    color="#9aa0a6"
+                                    style={styles.plansDropdownChevron}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                        {plansDropdownOpen ? (
+                            <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansList}>
+                                {plans.map((plan) => (
+                                    <TouchableOpacity key={plan.id} style={styles.planCard} activeOpacity={0.8}>
+                                        <View style={styles.planImageContainer}>
+                                            <Image source={{ uri: plan.image }} style={styles.planImage} resizeMode="cover" />
+                                        </View>
+                                        <View style={styles.planCardOverlay}>
+                                            <Text style={styles.planCardId}>ID: {plan.id}</Text>
+                                            <Text style={styles.planCardTitle}>{plan.name}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        ) : (
+                            <View style={styles.plansContent}>
+                                <MaterialCommunityIcons name="floor-plan" size={60} color="#8B0000" />
+                                <Text style={styles.contentTitle}>Plans</Text>
+                                <Text style={styles.contentSubtitle}>Select a plan to view</Text>
+                            </View>
+                        )}
                     </View>
                 );
             case 'specifications':
@@ -262,6 +317,90 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
+    },
+    plansContainer: {
+        flex: 1,
+    },
+    plansDropdown: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#0f1112',
+    },
+    plansDropdownLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    plansDropdownRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    plansDropdownText: {
+        color: '#ffffff',
+        fontSize: 15,
+        fontWeight: '600',
+        marginLeft: 10,
+        marginRight: 6,
+    },
+    plansCount: {
+        color: '#9aa0a6',
+        fontSize: 14,
+        marginRight: 4,
+    },
+    plansDropdownChevron: {
+        marginLeft: 2,
+    },
+    plansContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    plansListContainer: {
+        flex: 1,
+    },
+    plansList: {
+        padding: 12,
+        alignItems: 'center',
+    },
+    planCard: {
+        backgroundColor: '#161717',
+        borderRadius: 6,
+        marginBottom: 12,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#1f1f1f',
+        width: '75%',
+    },
+    planImageContainer: {
+        padding: 8,
+        paddingBottom: 0,
+        backgroundColor: '#161717',
+    },
+    planImage: {
+        width: '100%',
+        height: 180,
+        backgroundColor: '#1f1f1f',
+        borderRadius: 4,
+    },
+    planCardOverlay: {
+        padding: 12,
+        backgroundColor: '#161717',
+        alignItems: 'center',
+    },
+    planCardTitle: {
+        color: '#ffffff',
+        fontSize: 15,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    planCardId: {
+        color: '#9aa0a6',
+        fontSize: 12,
+        marginBottom: 4,
+        textAlign: 'center',
     },
     contentTitle: {
         color: '#ffffff',
