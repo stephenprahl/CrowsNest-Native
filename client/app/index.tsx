@@ -1,5 +1,5 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -43,6 +43,12 @@ export default function Index() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const router = useRouter();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setMenuOpen(false);
+    }, [])
+  );
 
   async function openScanner() {
     try {
