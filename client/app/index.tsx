@@ -95,45 +95,44 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.brand}>CROWSNEST</Text>
-          <Text style={styles.by}>BY</Text>
-          <Text style={styles.owner}>P&R TECH</Text>
-        </View>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
-            <MaterialIcons name="notifications-none" size={22} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => {
-            if (searchOpen) {
-              setSearchOpen(false);
-              setQuery('');
-            } else {
-              setSearchOpen(true);
-            }
-          }}>
-            <Ionicons name="search" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuOpen((s) => !s)}>
-            <MaterialIcons name="more-vert" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        {searchOpen ? (
+          <>
+            <TouchableOpacity onPress={() => { setSearchOpen(false); setQuery(''); }} style={styles.iconBtn}>
+              <MaterialIcons name="arrow-back" size={22} color="#fff" />
+            </TouchableOpacity>
+            <TextInput
+              autoFocus
+              placeholder="Search projects"
+              placeholderTextColor="#7a7f83"
+              value={query}
+              onChangeText={setQuery}
+              style={styles.searchInputInHeader}
+            />
+            <TouchableOpacity style={styles.qrBtn} onPress={() => { }}>
+              <MaterialIcons name="qr-code-scanner" size={20} color="#fff" />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View style={styles.headerLeft}>
+              <Text style={styles.brand}>CROWSNEST</Text>
+              <Text style={styles.by}>BY</Text>
+              <Text style={styles.owner}>P&R TECH</Text>
+            </View>
+            <View style={styles.headerIcons}>
+              <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
+                <MaterialIcons name="notifications-none" size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+                <Ionicons name="search" size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuOpen((s) => !s)}>
+                <MaterialIcons name="more-vert" size={22} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
-      {searchOpen && (
-        <View style={styles.searchRow}>
-          <TextInput
-            autoFocus
-            placeholder="Search projects"
-            placeholderTextColor="#7a7f83"
-            value={query}
-            onChangeText={setQuery}
-            style={styles.searchInput}
-          />
-          <TouchableOpacity style={styles.qrBtn} onPress={() => { }}>
-            <MaterialIcons name="qr-code-scanner" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      )}
 
       {menuOpen && (
         <Pressable style={styles.menuOverlay} onPress={() => setMenuOpen(false)}>
@@ -323,6 +322,16 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     height: 20,
     textAlignVertical: 'center',
+  },
+  searchInputInHeader: {
+    flex: 1,
+    color: '#fff',
+    paddingVertical: 0,
+    fontSize: 16,
+    lineHeight: 22,
+    height: 22,
+    textAlignVertical: 'center',
+    marginLeft: 8,
   },
   filterBtn: {
     marginLeft: 8,
