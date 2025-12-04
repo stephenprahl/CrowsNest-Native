@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#121417',
@@ -196,9 +195,10 @@ const styles = StyleSheet.create({
     color: '#b0aeaeff',
     fontSize: 16,
     fontWeight: '700',
+    marginLeft: 16,
   },
   placeholder: {
-    width: 32, // To balance the back button width
+    flex: 1,
   },
   scrollContainer: {
     flex: 1,
@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2b2b2b',
     paddingVertical: 6,
     marginBottom: 6,
+    cursor: 'pointer',
   },
   inputText: {
     color: '#b0aeaeff',
