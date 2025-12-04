@@ -89,10 +89,20 @@ export default function Index() {
 
   function renderProject({ item }: { item: Project }) {
     return (
-      <TouchableOpacity style={styles.card} activeOpacity={0.8} onLongPress={() => {
-        setSelectedProject(item);
-        setDeleteModalOpen(true);
-      }}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.8}
+        onPress={() => {
+          router.push({
+            pathname: '/project/[id]',
+            params: { id: item.id, name: item.name },
+          });
+        }}
+        onLongPress={() => {
+          setSelectedProject(item);
+          setDeleteModalOpen(true);
+        }}
+      >
         <View style={styles.cardLeft} />
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle}>{item.name}</Text>
