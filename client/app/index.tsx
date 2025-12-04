@@ -244,7 +244,7 @@ export default function Index() {
             />
             <TextInput
               style={styles.modalInput}
-              placeholder="Address (optional)"
+              placeholder="Project Code (optional)"
               placeholderTextColor="#7a7f83"
               value={newProjectAddress}
               onChangeText={setNewProjectAddress}
