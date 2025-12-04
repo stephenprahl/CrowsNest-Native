@@ -35,6 +35,12 @@ export default function Index() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanning, setScanning] = useState(false);
   const [BarcodeModule, setBarcodeModule] = useState<any | null>(null);
+  const [projects, setProjects] = useState<Project[]>(SAMPLE_PROJECTS);
+  const [createProjectOpen, setCreateProjectOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectAddress, setNewProjectAddress] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const router = useRouter();
 
@@ -67,17 +73,20 @@ export default function Index() {
     }
   }
 
-  const projects = useMemo(() => {
-    if (!query) return SAMPLE_PROJECTS;
+  const projectsFiltered = useMemo(() => {
+    if (!query) return projects;
     const q = query.toLowerCase();
-    return SAMPLE_PROJECTS.filter(
+    return projects.filter(
       (p) => p.name.toLowerCase().includes(q) || (p.address || '').toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, projects]);
 
   function renderProject({ item }: { item: Project }) {
     return (
-      <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.card} activeOpacity={0.8} onLongPress={() => {
+        setSelectedProject(item);
+        setDeleteModalOpen(true);
+      }}>
         <View style={styles.cardLeft} />
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle}>{item.name}</Text>
@@ -217,13 +226,97 @@ export default function Index() {
         </View>
       </Modal>
 
+      <Modal visible={createProjectOpen} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New Project</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Project Name"
+              placeholderTextColor="#7a7f83"
+              value={newProjectName}
+              onChangeText={setNewProjectName}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Address (optional)"
+              placeholderTextColor="#7a7f83"
+              value={newProjectAddress}
+              onChangeText={setNewProjectAddress}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setCreateProjectOpen(false);
+                  setNewProjectName('');
+                  setNewProjectAddress('');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  if (newProjectName.trim()) {
+                    setProjects(prev => [...prev, {
+                      id: Date.now().toString(),
+                      name: newProjectName.trim(),
+                      address: newProjectAddress.trim() || undefined,
+                      updated: 'Just now'
+                    }]);
+                    setCreateProjectOpen(false);
+                    setNewProjectName('');
+                    setNewProjectAddress('');
+                  }
+                }}
+              >
+                <Text style={styles.modalButtonText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={deleteModalOpen} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Project</Text>
+            <Text style={styles.modalText}>Are you sure you want to delete "{selectedProject?.name}"? This action cannot be undone.</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setDeleteModalOpen(false);
+                  setSelectedProject(null);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#8B0000' }]}
+                onPress={() => {
+                  if (selectedProject) {
+                    setProjects(prev => prev.filter(p => p.id !== selectedProject.id));
+                  }
+                  setDeleteModalOpen(false);
+                  setSelectedProject(null);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>PROJECTS ON DEVICE</Text>
         <Text style={styles.sectionCount}>{projects.length}</Text>
       </View>
 
       <FlatList
-        data={projects}
+        data={projectsFiltered}
         keyExtractor={(i) => i.id}
         renderItem={renderProject}
         contentContainerStyle={styles.list}
@@ -251,7 +344,7 @@ export default function Index() {
         )}
       />
 
-      <TouchableOpacity style={styles.fab} activeOpacity={0.9}>
+      <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => setCreateProjectOpen(true)}>
         <MaterialIcons name="add" size={28} color="#fff" />
       </TouchableOpacity>
     </SafeAreaView>
@@ -486,8 +579,8 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    right: 18,
-    bottom: 28,
+    right: 30,
+    bottom: 76,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -495,5 +588,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#141616',
+    padding: 20,
+    borderRadius: 8,
+    width: '80%',
+  },
+  modalTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalText: {
+    color: '#ffffff',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalInput: {
+    color: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2b2b2b',
+    paddingVertical: 8,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    backgroundColor: '#121417',
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
   },
 });
