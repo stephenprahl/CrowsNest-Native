@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-export default function profile() {
+export default function ProfileScreen() {
   const router = useRouter()
   const [firstName, setFirstName] = useState('John')
   const [lastName, setLastName] = useState('Doe')
