@@ -1,50 +1,52 @@
-# Welcome to your Expo app 👋
+# CrowsNest Mobile Client
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The React Native mobile application for CrowsNest, a project management tool built with Expo.
 
-## Get started
+## Getting Started
 
-1. Install dependencies
-
+1. **Install dependencies**:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. **Start the development server**:
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Run on your device**:
+   - Scan the QR code with the Expo Go app
+   - Or run `npm run android` / `npm run ios` for emulators
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- `app/`: Screen components using Expo Router file-based routing
+  - `index.tsx`: Home screen with project list
+  - `profile.tsx`: User profile management
+  - `notifications.tsx`: Notifications screen
+  - `support.tsx`: Support and help
+  - `refresh.tsx`: Data refresh functionality
+  - `_layout.tsx`: Root layout component
+- `assets/`: Images and static resources
+- `package.json`: Dependencies and scripts
 
-## Get a fresh project
+## Key Features
 
-When you're ready, run:
+- **Project Management**: View, create, and delete projects
+- **Search**: Integrated search functionality
+- **QR Scanning**: Barcode/QR code scanning capabilities
+- **Navigation**: Tab-based navigation with custom header
 
-```bash
-npm run reset-project
-```
+## Development
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+This app uses:
+- **Expo Router**: For navigation and routing
+- **TypeScript**: For type safety
+- **React Native**: For cross-platform mobile development
+- **Expo SDK**: For enhanced native features
 
-## Learn more
+## Learn More
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/docs/getting-started)
+- [Expo Router Guide](https://docs.expo.dev/router/introduction/)

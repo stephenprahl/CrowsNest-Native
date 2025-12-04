@@ -1,69 +1,93 @@
-# CrowsNest Native 
+# CrowsNest Native
 
-A small mobile + server example project combining an Expo React Native client and a minimal Bun-based server. This repository contains a working client app built with Expo Router and a tiny server entry point in TypeScript.
+A mobile project management application built with Expo React Native and TypeScript. CrowsNest allows users to manage construction and renovation projects with features like project creation, search, QR code scanning, and more.
 
-**Project Structure**
+**Built by P&R Tech**
 
-- `client/`: Expo React Native app using `expo-router` and standard Expo toolchain.
-- `server/`: Minimal TypeScript server (example uses Bun).
-- `README.md`: This file.
+## Features
 
-**Prerequisites**
+- **Project Management**: Create, view, and delete projects with details like name, address, and last updated time
+- **Search Functionality**: Integrated search that replaces the navbar for focused project discovery
+- **QR Code Scanning**: Scan QR codes for quick project access or data entry
+- **User Profile**: Manage user settings and account information
+- **Notifications**: Stay updated with project notifications
+- **Support**: Access help and support resources
+- **Modern UI**: Clean, dark-themed interface optimized for mobile devices
 
-- Node.js (for general tooling). Either `npm`, `yarn`, or `pnpm` will work for the client.
-- Expo CLI (optional) or use the `expo` commands shipped with the SDK.
-- Bun (recommended for running the example `server/index.ts`) — see https://bun.sh for install instructions.
+## Project Structure
 
-**Quick Start**
+- `client/`: Expo React Native app using `expo-router` for navigation
+  - `app/`: File-based routing screens (index, profile, notifications, support, refresh)
+  - `assets/`: Images and other static assets
+- `server/`: Minimal TypeScript server (example setup with Bun)
+- `README.md`: This file
 
-1. Install dependencies for both client and server:
+## Prerequisites
 
-```bash
-# from repo root
-cd client && npm install
-cd ../server && npm install
-```
+- Node.js (v16 or later)
+- Expo CLI: `npm install -g @expo/cli`
+- Bun (recommended for server): https://bun.sh
 
-2. Run the client (Expo):
+## Quick Start
 
-```bash
-# from repo root
-cd client
-npm start
-```
+1. **Install dependencies**:
+   ```bash
+   # Client
+   cd client && npm install
 
-You can also run `npm run android`, `npm run ios`, or `npm run web` from `client/` — these map to the scripts in `client/package.json` and use `expo start` under the hood.
+   # Server (optional)
+   cd ../server && npm install
+   ```
 
-3. Run the server (example uses Bun):
+2. **Start the development server**:
+   ```bash
+   cd client
+   npm start
+   ```
 
-```bash
-# from repo root
-cd server
-# run the TypeScript entry with Bun
-bun index.ts
-```
+3. **Run on device/emulator**:
+   - Press `a` for Android emulator
+   - Press `i` for iOS simulator
+   - Scan QR code with Expo Go app for physical device
 
-If you prefer Node.js, compile the TypeScript or use a runner like `ts-node` — the server here is intentionally minimal and mainly demonstrates structure.
+4. **Optional: Run the server**:
+   ```bash
+   cd server
+   bun index.ts
+   ```
 
-**Notes**
+## App Navigation
 
-- The client is an Expo project (see `client/app` and `client/app.json`). Main entry uses `expo-router/entry` as configured in `client/package.json`.
-- The server currently contains a simple `index.ts` which prints a message when run with Bun. Expand this to add routes or business logic as needed.
+- **Home**: Project list with search and create functionality
+- **Profile**: User account management
+- **Notifications**: Project updates and alerts
+- **Support**: Help and contact information
+- **Refresh**: Data synchronization
 
-**Contributing**
+## Key Interactions
 
-- Open an issue for design or feature requests.
-- Create PRs against the `main` branch; keep changes small and focused.
+- **Search**: Tap search icon in navbar to replace header with search input
+- **Create Project**: Tap the red FAB button to open project creation modal
+- **Delete Project**: Long press on a project card to open delete confirmation
+- **QR Scanner**: Access via search bar or other integrated features
 
-**License**
+## Development
 
-This repository does not include a license file. Add a `LICENSE` if you want to specify reuse terms.
+This project uses:
+- **Expo Router**: File-based routing for React Native
+- **TypeScript**: Type-safe development
+- **React Native**: Cross-platform mobile development
+- **Expo SDK**: Enhanced native capabilities
 
----
+## Contributing
 
-If you want, I can also:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test on multiple platforms
+5. Submit a pull request
 
-- add a `server/package.json` `scripts` section (for `npm run dev` or `bun start`),
-- add a short `CONTRIBUTING.md`, or
-- scaffold a basic server route and example API used by the client.
+## License
+
+This project is proprietary software developed by P&R Tech.
 
