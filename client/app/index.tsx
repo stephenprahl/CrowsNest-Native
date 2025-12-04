@@ -1,4 +1,5 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 type Project = {
   id: string;
@@ -104,7 +104,14 @@ export default function Index() {
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
             <MaterialIcons name="notifications-none" size={22} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => {
+            if (searchOpen) {
+              setSearchOpen(false);
+              setQuery('');
+            } else {
+              setSearchOpen(true);
+            }
+          }}>
             <Ionicons name="search" size={20} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuOpen((s) => !s)}>
@@ -114,7 +121,6 @@ export default function Index() {
       </View>
       {searchOpen && (
         <View style={styles.searchRow}>
-          <Ionicons name="search" size={20} color="#9aa0a6" />
           <TextInput
             autoFocus
             placeholder="Search projects"
@@ -125,15 +131,6 @@ export default function Index() {
           />
           <TouchableOpacity style={styles.qrBtn} onPress={() => { }}>
             <MaterialIcons name="qr-code-scanner" size={20} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.filterBtn}
-            onPress={() => {
-              setSearchOpen(false);
-              setQuery('');
-            }}
-          >
-            <MaterialIcons name="close" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
       )}
