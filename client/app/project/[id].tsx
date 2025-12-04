@@ -27,9 +27,8 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'tasks', label: 'Tasks', icon: 'checkbox-marked-circle-outline' },
     { id: 'photos', label: 'Photos', icon: 'image-multiple-outline' },
     { id: 'forms', label: 'Forms', icon: 'form-select' },
-    { id: 'team', label: 'Team', icon: 'account-group-outline' },
-    { id: 'schedule', label: 'Schedule', icon: 'calendar-outline' },
-    { id: 'reports', label: 'Reports', icon: 'chart-bar' },
+    { id: 'files', label: 'Files', icon: 'folder-outline' },
+    { id: 'people', label: 'People', icon: 'account-group-outline' },
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
 
@@ -104,28 +103,20 @@ export default function ProjectHomeScreen() {
                         <Text style={styles.contentSubtitle}>Project forms and checklists</Text>
                     </View>
                 );
-            case 'team':
+            case 'files':
+                return (
+                    <View style={styles.contentSection}>
+                        <MaterialCommunityIcons name="folder-outline" size={60} color="#8B0000" />
+                        <Text style={styles.contentTitle}>Files</Text>
+                        <Text style={styles.contentSubtitle}>Project files and documents</Text>
+                    </View>
+                );
+            case 'people':
                 return (
                     <View style={styles.contentSection}>
                         <MaterialCommunityIcons name="account-group-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Team</Text>
+                        <Text style={styles.contentTitle}>People</Text>
                         <Text style={styles.contentSubtitle}>Project team members</Text>
-                    </View>
-                );
-            case 'schedule':
-                return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="calendar-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Schedule</Text>
-                        <Text style={styles.contentSubtitle}>Project timeline and milestones</Text>
-                    </View>
-                );
-            case 'reports':
-                return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="chart-bar" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Reports</Text>
-                        <Text style={styles.contentSubtitle}>Project reports and analytics</Text>
                     </View>
                 );
             case 'settings':
