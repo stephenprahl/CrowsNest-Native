@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import {
     Animated,
     Dimensions,
+    Modal,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -45,6 +46,11 @@ const SAMPLE_PLANS: Plan[] = [
     { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
 ];
 
+const RECENTLY_VIEWED_PLANS: Plan[] = [
+    { id: '1', name: 'Floor Plan - Level 1', image: require('../../assets/images/plan-1.jpg') },
+    { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
+];
+
 export default function ProjectHomeScreen() {
     const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
     const router = useRouter();
@@ -52,6 +58,8 @@ export default function ProjectHomeScreen() {
     const [activeSection, setActiveSection] = useState('plans');
     const [plansDropdownOpen, setPlansDropdownOpen] = useState(false);
     const [plans] = useState(SAMPLE_PLANS);
+    const [viewMode, setViewMode] = useState<'thumbnail' | 'list'>('thumbnail');
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
 
     const openSidebar = () => {
@@ -80,53 +88,67 @@ export default function ProjectHomeScreen() {
         switch (activeSection) {
             case 'plans':
                 return (
-                    <View style={styles.plansContainer}>
-                        <TouchableOpacity
-                            style={styles.plansDropdown}
-                            onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.plansDropdownLeft}>
-                                <MaterialCommunityIcons name="folder-outline" size={20} color="#9aa0a6" />
-                                <Text style={styles.plansDropdownText}>All Plans</Text>
-                            </View>
-                            <View style={styles.plansDropdownRight}>
-                                <Text style={styles.plansCount}>({plans.length} plans)</Text>
-                                <MaterialCommunityIcons
-                                    name={plansDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                                    size={20}
-                                    color="#9aa0a6"
-                                    style={styles.plansDropdownChevron}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                        {plansDropdownOpen ? (
-                            <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansList}>
-                                {plans.map((plan) => (
-                                    <TouchableOpacity
-                                        key={plan.id}
-                                        style={styles.planCard}
-                                        activeOpacity={0.8}
-                                        onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}`)}
-                                    >
-                                        <View style={styles.planImageContainer}>
-                                            <Image source={plan.image} style={styles.planImage} contentFit="cover" />
-                                        </View>
-                                        <View style={styles.planCardOverlay}>
-                                            <Text style={styles.planCardId}>ID: {plan.id}</Text>
-                                            <Text style={styles.planCardTitle}>{plan.name}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        ) : (
-                            <View style={styles.plansContent}>
-                                <MaterialCommunityIcons name="floor-plan" size={60} color="#8B0000" />
-                                <Text style={styles.contentTitle}>Plans</Text>
-                                <Text style={styles.contentSubtitle}>Select a plan to view</Text>
-                            </View>
-                        )}
-                    </View>
+                    <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansContentContainer}>
+                        <View style={styles.plansWrapper}>
+                            <TouchableOpacity
+                                style={styles.plansDropdown}
+                                onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.plansDropdownLeft}>
+                                    <MaterialCommunityIcons name="folder-outline" size={20} color="#9aa0a6" />
+                                    <Text style={styles.plansDropdownText}>All Plans</Text>
+                                </View>
+                                <View style={styles.plansDropdownRight}>
+                                    <Text style={styles.plansCount}>({plans.length} plans)</Text>
+                                    <MaterialCommunityIcons
+                                        name={plansDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                                        size={20}
+                                        color="#9aa0a6"
+                                        style={styles.plansDropdownChevron}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                            {plansDropdownOpen ? (
+                                <View style={styles.plansGrid}>
+                                    {plans.map((plan) => (
+                                        viewMode === 'thumbnail' ? (
+                                            <TouchableOpacity
+                                                key={plan.id}
+                                                style={styles.planCard}
+                                                activeOpacity={0.8}
+                                                onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}`)}
+                                            >
+                                                <View style={styles.planImageContainer}>
+                                                    <Image source={plan.image} style={styles.planImage} contentFit="cover" />
+                                                </View>
+                                                <View style={styles.planCardOverlay}>
+                                                    <Text style={styles.planCardId}>ID: {plan.id}</Text>
+                                                    <Text style={styles.planCardTitle}>{plan.name}</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <TouchableOpacity
+                                                key={plan.id}
+                                                style={styles.planListItem}
+                                                activeOpacity={0.8}
+                                                onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}`)}
+                                            >
+                                                <MaterialCommunityIcons name="floor-plan" size={24} color="#9aa0a6" />
+                                                <Text style={styles.planListText} numberOfLines={1}>{plan.name}</Text>
+                                            </TouchableOpacity>
+                                        )
+                                    ))}
+                                </View>
+                            ) : (
+                                <View style={styles.plansContent}>
+                                    <MaterialCommunityIcons name="floor-plan" size={60} color="#8B0000" />
+                                    <Text style={styles.contentTitle}>Plans</Text>
+                                    <Text style={styles.contentSubtitle}>Select a plan to view</Text>
+                                </View>
+                            )}
+                        </View>
+                    </ScrollView>
                 );
             case 'specifications':
                 return (
@@ -200,12 +222,28 @@ export default function ProjectHomeScreen() {
                     {name || 'Project'}
                 </Text>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
-                    </TouchableOpacity>
+                    {activeSection === 'plans' ? (
+                        <>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}>
+                                <MaterialCommunityIcons name={plansDropdownOpen ? "fullscreen-exit" : "fullscreen"} size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setViewMode(viewMode === 'thumbnail' ? 'list' : 'thumbnail')}>
+                                <MaterialCommunityIcons name={viewMode === 'thumbnail' ? "view-list" : "view-grid"} size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setHistoryModalOpen(true)}>
+                                <MaterialCommunityIcons name="history" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
             </View>
 
@@ -276,6 +314,33 @@ export default function ProjectHomeScreen() {
                     </Animated.View>
                 </Pressable>
             )}
+
+            {/* History Modal */}
+            <Modal
+                visible={historyModalOpen}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setHistoryModalOpen(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setHistoryModalOpen(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Recently Viewed Plans</Text>
+                            <TouchableOpacity onPress={() => setHistoryModalOpen(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.modalBody}>
+                            {RECENTLY_VIEWED_PLANS.map((plan) => (
+                                <TouchableOpacity key={plan.id} style={styles.recentPlanItem}>
+                                    <Image source={plan.image} style={styles.recentPlanImage} />
+                                    <Text style={styles.recentPlanName}>{plan.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -323,13 +388,21 @@ const styles = StyleSheet.create({
     plansContainer: {
         flex: 1,
     },
+    plansWrapper: {
+        backgroundColor: '#161717',
+        borderWidth: 1,
+        borderColor: '#1f1f1f',
+        borderRadius: 6,
+        width: '100%',
+        alignSelf: 'center',
+        padding: 12,
+    },
     plansDropdown: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#0f1112',
     },
     plansDropdownLeft: {
         flexDirection: 'row',
@@ -367,29 +440,37 @@ const styles = StyleSheet.create({
         padding: 12,
         alignItems: 'center',
     },
+    plansContentContainer: {
+        alignItems: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 10,
+    },
+    plansGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+    },
     planCard: {
-        backgroundColor: '#161717',
+        backgroundColor: '#1f1f1f',
         borderRadius: 6,
         marginBottom: 12,
         overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: '#1f1f1f',
-        width: '75%',
+        width: '48%',
     },
     planImageContainer: {
         padding: 8,
         paddingBottom: 0,
-        backgroundColor: '#161717',
+        backgroundColor: '#1f1f1f',
     },
     planImage: {
         width: '100%',
-        height: 180,
+        height: 120,
         backgroundColor: '#1f1f1f',
         borderRadius: 4,
     },
     planCardOverlay: {
         padding: 12,
-        backgroundColor: '#161717',
+        backgroundColor: '#1f1f1f',
         alignItems: 'center',
     },
     planCardTitle: {
@@ -403,6 +484,22 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginBottom: 4,
         textAlign: 'center',
+    },
+    planListItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        borderRadius: 6,
+        marginBottom: 12,
+        padding: 12,
+        width: '100%',
+    },
+    planListText: {
+        color: '#ffffff',
+        fontSize: 15,
+        fontWeight: '600',
+        marginLeft: 12,
+        flex: 1,
     },
     contentTitle: {
         color: '#ffffff',
@@ -499,5 +596,50 @@ const styles = StyleSheet.create({
         color: '#9aa0a6',
         fontSize: 14,
         marginLeft: 12,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '90%',
+        maxHeight: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    modalTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalBody: {
+        padding: 16,
+    },
+    recentPlanItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    recentPlanImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 4,
+        marginRight: 12,
+    },
+    recentPlanName: {
+        color: '#ffffff',
+        fontSize: 16,
     },
 });
