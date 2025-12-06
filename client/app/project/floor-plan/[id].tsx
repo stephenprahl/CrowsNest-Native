@@ -8,6 +8,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -19,28 +20,53 @@ export default function FloorPlanScreen() {
     const { id, name, image } = useLocalSearchParams<{ id: string; name: string; image: string }>();
     const router = useRouter();
     const [filtersModalVisible, setFiltersModalVisible] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [query, setQuery] = useState('');
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Navbar */}
             <View style={styles.navbar}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.navTitle} numberOfLines={1}>
-                    {name || 'Floor Plan'}
-                </Text>
-                <View style={styles.navIcons}>
-                    <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersModalVisible(true)}>
-                        <MaterialCommunityIcons name="eye" size={22} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconBtn}>
-                        <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
-                    </TouchableOpacity>
-                </View>
+                {searchOpen ? (
+                    <>
+                        <TouchableOpacity onPress={() => { setSearchOpen(false); setQuery(''); }} style={styles.navBtn}>
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <TextInput
+                            autoFocus
+                            placeholder="Search floor plan"
+                            placeholderTextColor="#7a7f83"
+                            value={query}
+                            onChangeText={setQuery}
+                            style={styles.searchInput}
+                        />
+                        <View style={styles.navIcons}>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSearchOpen(false); setQuery(''); }}>
+                                <MaterialCommunityIcons name="close" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    <>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.navTitle} numberOfLines={1}>
+                            {name || 'Floor Plan'}
+                        </Text>
+                        <View style={styles.navIcons}>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersModalVisible(true)}>
+                                <MaterialCommunityIcons name="eye" size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+                                <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
             </View>
 
             {/* Floor Plan Image */}
@@ -143,6 +169,16 @@ const styles = StyleSheet.create({
     },
     iconBtn: {
         marginLeft: 12,
+    },
+    searchInput: {
+        flex: 1,
+        color: '#fff',
+        paddingVertical: 0,
+        fontSize: 16,
+        lineHeight: 22,
+        height: 22,
+        textAlignVertical: 'center',
+        marginLeft: 8,
     },
     content: {
         flex: 1,
