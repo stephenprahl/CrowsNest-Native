@@ -12,7 +12,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -65,6 +65,50 @@ export default function ProjectHomeScreen() {
     const [query, setQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
+
+    const [projectSettings, setProjectSettings] = useState({
+        name: name || 'Project Name',
+        description: 'Project description',
+        status: 'Active',
+        location: 'Project location',
+        budget: '100000',
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+        archiveTasksEnabled: false,
+        mobileStorageEnabled: false,
+        projectName: name || 'Project Name',
+        projectCode: 'N/A',
+        address: 'Enter project address',
+        sendEmailNotifications: false,
+        requireCostManpower: false,
+    });
+
+    const [sendEmailChecked, setSendEmailChecked] = useState(false);
+    const [requireCostChecked, setRequireCostChecked] = useState(false);
+
+    const [lastSync, setLastSync] = useState('Never');
+
+    const [manpowerUnitModalVisible, setManpowerUnitModalVisible] = useState(false);
+    const [manpowerUnit, setManpowerUnit] = useState('man-hours');
+
+    const [mobileStorageModalVisible, setMobileStorageModalVisible] = useState(false);
+    const [mobileStorageOption, setMobileStorageOption] = useState('Include all revisions');
+
+    const [archiveTasksModalVisible, setArchiveTasksModalVisible] = useState(false);
+    const [archiveTasksOption, setArchiveTasksOption] = useState('After 30 days');
+
+    const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);
+    const [measurementUnit, setMeasurementUnit] = useState('US/Imperial');
+
+    const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+    const [currency, setCurrency] = useState('USD');
+
+    const [timezoneModalVisible, setTimezoneModalVisible] = useState(false);
+    const [timezone, setTimezone] = useState('(GMT+00:00) Greenwich Mean Time - London');
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editingField, setEditingField] = useState<'projectName' | 'projectCode' | 'address'>('projectName');
+    const [editingValue, setEditingValue] = useState('');
 
     useEffect(() => {
         if (activeSection === 'specifications' && searchOpen) {
@@ -212,11 +256,125 @@ export default function ProjectHomeScreen() {
                 );
             case 'settings':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="cog-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Settings</Text>
-                        <Text style={styles.contentSubtitle}>Project configuration</Text>
-                    </View>
+                    <ScrollView style={styles.settingsContainer} contentContainerStyle={styles.settingsContent}>
+
+                        <Text style={styles.cardTitle}>PROJECT INFORMATION</Text>
+                        <View style={styles.settingsCard}>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <TouchableOpacity onPress={() => { setEditingField('projectName'); setEditingValue(projectSettings.projectName); setEditModalVisible(true); }}>
+                                    <Text style={styles.settingLabel}>Project name</Text>
+                                    <Text style={styles.placeholderText}>{projectSettings.projectName}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <TouchableOpacity onPress={() => { setEditingField('projectCode'); setEditingValue(projectSettings.projectCode); setEditModalVisible(true); }}>
+                                    <Text style={styles.settingLabel}>Project code</Text>
+                                    <Text style={styles.placeholderText}>{projectSettings.projectCode}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.settingItem}>
+                                <TouchableOpacity onPress={() => { setEditingField('address'); setEditingValue(projectSettings.address); setEditModalVisible(true); }}>
+                                    <Text style={styles.settingLabel}>Address</Text>
+                                    <Text style={styles.placeholderText}>{projectSettings.address}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <Text style={styles.cardTitle}>GENERAL</Text>
+                        <View style={styles.settingsCard}>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <TouchableOpacity onPress={() => setTimezoneModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Timezone</Text>
+                                    <Text style={styles.placeholderText}>{timezone}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <TouchableOpacity onPress={() => setCurrencyModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Currency</Text>
+                                    <Text style={styles.placeholderText}>{currency}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.settingItem}>
+                                <TouchableOpacity onPress={() => setMeasurementUnitModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Measurement unit</Text>
+                                    <Text style={styles.placeholderText}>{measurementUnit}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <Text style={styles.cardTitle}>STORAGE</Text>
+                        <View style={styles.settingsCard}>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <TouchableOpacity onPress={() => setArchiveTasksModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Archive tasks</Text>
+                                    <Text style={styles.placeholderText}>{archiveTasksOption}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.settingItem}>
+                                <TouchableOpacity onPress={() => setMobileStorageModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Mobile storage</Text>
+                                    <Text style={styles.placeholderText}>{mobileStorageOption}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <Text style={styles.cardTitle}>TASKS</Text>
+                        <View style={styles.settingsCard}>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <View style={styles.settingRow}>
+                                    <Text style={styles.settingLabel}>Send email notifications</Text>
+                                    <TouchableOpacity
+                                        activeOpacity={0.7}
+                                        onPress={() => setSendEmailChecked(!sendEmailChecked)}
+                                    >
+                                        <View style={[styles.checkbox, sendEmailChecked && styles.checkboxChecked]}>
+                                            {sendEmailChecked && <MaterialCommunityIcons name="check" size={16} color="#ffffff" />}
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                            <View style={[styles.settingItem, styles.settingItemWithBorder]}>
+                                <View style={styles.settingRow}>
+                                    <Text style={styles.settingLabel}>Require cost and manpower</Text>
+                                    <TouchableOpacity
+                                        activeOpacity={0.7}
+                                        onPress={() => setRequireCostChecked(!requireCostChecked)}
+                                    >
+                                        <View style={[styles.checkbox, requireCostChecked && styles.checkboxChecked]}>
+                                            {requireCostChecked && <MaterialCommunityIcons name="check" size={16} color="#ffffff" />}
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                            <View style={styles.settingItem}>
+                                <TouchableOpacity onPress={() => setManpowerUnitModalVisible(true)}>
+                                    <Text style={styles.settingLabel}>Manpower unit</Text>
+                                    <Text style={styles.placeholderText}>{manpowerUnit}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <Text style={styles.cardTitle}>SYNC</Text>
+                        <View style={styles.settingsCard}>
+                            <View style={styles.settingItem}>
+                                <TouchableOpacity>
+                                    <Text style={styles.settingLabel}>Last sync</Text>
+                                    <Text style={styles.placeholderText}>{lastSync}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.dangerButton}>
+                                <Text style={styles.buttonText}>REMOVE FROM DEVICE</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.secondaryButton}>
+                                <Text style={[styles.buttonText, styles.redButtonText]}>LEAVE PROJECT</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.footerText}>To archive or delete your project, log in to CrowsNest on the web.</Text>
+                    </ScrollView>
                 );
             default:
                 return null;
@@ -248,7 +406,7 @@ export default function ProjectHomeScreen() {
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle} numberOfLines={1}>
-                            {activeSection === 'specifications' ? 'Specifications' : (name || 'Project')}
+                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : (name || 'Project')}
                         </Text>
                         <View style={styles.headerRight}>
                             {activeSection === 'specifications' ? (
@@ -267,6 +425,8 @@ export default function ProjectHomeScreen() {
                                         <MaterialCommunityIcons name="history" size={22} color="#fff" />
                                     </TouchableOpacity>
                                 </>
+                            ) : activeSection === 'settings' ? (
+                                <View />
                             ) : (
                                 <>
                                     <TouchableOpacity style={styles.iconBtn}>
@@ -300,9 +460,17 @@ export default function ProjectHomeScreen() {
                             {/* Sidebar header */}
                             <View style={styles.sidebarHeader}>
                                 <View style={styles.sidebarHeaderText}>
-                                    <Text style={styles.sidebarTitle} numberOfLines={1}>
-                                        {name || 'Project'}
-                                    </Text>
+                                    <View style={styles.titleRow}>
+                                        <Text style={[styles.sidebarTitle, { flex: 1 }]} numberOfLines={1}>
+                                            {name || 'Project'}
+                                        </Text>
+                                        <TouchableOpacity
+                                            style={styles.backToProjectsIcon}
+                                            onPress={() => router.back()}
+                                        >
+                                            <MaterialCommunityIcons name="home-outline" size={20} color="#9aa0a6" />
+                                        </TouchableOpacity>
+                                    </View>
                                     <Text style={styles.sidebarSubtitle}>Project Menu</Text>
                                 </View>
                             </View>
@@ -335,16 +503,6 @@ export default function ProjectHomeScreen() {
                                 ))}
                             </View>
 
-                            {/* Back to projects */}
-                            <View style={styles.sidebarFooter}>
-                                <TouchableOpacity
-                                    style={styles.backToProjects}
-                                    onPress={() => router.back()}
-                                >
-                                    <MaterialCommunityIcons name="home-outline" size={20} color="#9aa0a6" />
-                                    <Text style={styles.backToProjectsText}>Back to Projects</Text>
-                                </TouchableOpacity>
-                            </View>
                         </Pressable>
                     </Animated.View>
                 </Pressable>
@@ -370,6 +528,274 @@ export default function ProjectHomeScreen() {
                                 <TouchableOpacity key={plan.id} style={styles.recentPlanItem}>
                                     <Image source={plan.image} style={styles.recentPlanImage} />
                                     <Text style={styles.recentPlanName}>{plan.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                visible={editModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setEditModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setEditModalVisible(false)}>
+                    <View style={styles.editModalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>
+                                Edit {editingField === 'projectName' ? 'Project Name' : editingField === 'projectCode' ? 'Project Code' : 'Address'}
+                            </Text>
+                            <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.modalBody}>
+                            <TextInput
+                                style={styles.editInput}
+                                value={editingValue}
+                                onChangeText={setEditingValue}
+                                placeholder="Enter value"
+                                placeholderTextColor="#9aa0a6"
+                                multiline={editingField === 'address'}
+                            />
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity
+                                    style={styles.cancelButton}
+                                    onPress={() => setEditModalVisible(false)}
+                                >
+                                    <Text style={styles.buttonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.saveButton}
+                                    onPress={() => {
+                                        setProjectSettings(prev => ({ ...prev, [editingField]: editingValue }));
+                                        setEditModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={styles.buttonText}>Save</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Manpower Unit Modal */}
+            <Modal
+                visible={manpowerUnitModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setManpowerUnitModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setManpowerUnitModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Manpower Unit</Text>
+                            <TouchableOpacity onPress={() => setManpowerUnitModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.modalBody}>
+                            {['man-hours', 'man-days', 'man-months'].map((unit) => (
+                                <TouchableOpacity
+                                    key={unit}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setManpowerUnit(unit);
+                                        setManpowerUnitModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, manpowerUnit === unit && styles.selectedModalOptionText]}>{unit}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Mobile Storage Modal */}
+            <Modal
+                visible={mobileStorageModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setMobileStorageModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setMobileStorageModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Mobile Storage Option</Text>
+                            <TouchableOpacity onPress={() => setMobileStorageModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.modalBody}>
+                            {[
+                                'Include all revisions',
+                                ...Array.from({ length: 9 }, (_, i) => `Maximum ${i + 1} revision${i + 1 === 1 ? '' : 's'} per plan`)
+                            ].map((option) => (
+                                <TouchableOpacity
+                                    key={option}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setMobileStorageOption(option);
+                                        setMobileStorageModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, mobileStorageOption === option && styles.selectedModalOptionText]}>{option}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Archive Tasks Modal */}
+            <Modal
+                visible={archiveTasksModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setArchiveTasksModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setArchiveTasksModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Archive Tasks Option</Text>
+                            <TouchableOpacity onPress={() => setArchiveTasksModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.modalBody}>
+                            {[
+                                'After 1 day',
+                                'After 3 days',
+                                'After 7 days',
+                                'After 30 days',
+                                'After 90 days',
+                                'After 365 days',
+                                'After 3650 days'
+                            ].map((option) => (
+                                <TouchableOpacity
+                                    key={option}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setArchiveTasksOption(option);
+                                        setArchiveTasksModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, archiveTasksOption === option && styles.selectedModalOptionText]}>{option}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Measurement Unit Modal */}
+            <Modal
+                visible={measurementUnitModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setMeasurementUnitModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setMeasurementUnitModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Measurement Unit</Text>
+                            <TouchableOpacity onPress={() => setMeasurementUnitModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.modalBody}>
+                            {['US/Imperial', 'Metric/SI'].map((unit) => (
+                                <TouchableOpacity
+                                    key={unit}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setMeasurementUnit(unit);
+                                        setMeasurementUnitModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, measurementUnit === unit && styles.selectedModalOptionText]}>{unit}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Currency Modal */}
+            <Modal
+                visible={currencyModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setCurrencyModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setCurrencyModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Currency</Text>
+                            <TouchableOpacity onPress={() => setCurrencyModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.modalBody}>
+                            {[
+                                'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'SEK', 'NZD'
+                            ].map((curr) => (
+                                <TouchableOpacity
+                                    key={curr}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setCurrency(curr);
+                                        setCurrencyModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, currency === curr && styles.selectedModalOptionText]}>{curr}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Timezone Modal */}
+            <Modal
+                visible={timezoneModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setTimezoneModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setTimezoneModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Select Timezone</Text>
+                            <TouchableOpacity onPress={() => setTimezoneModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.modalBody}>
+                            {[
+                                '(GMT-08:00) Pacific Time - Los Angeles',
+                                '(GMT-07:00) Mountain Time - Denver',
+                                '(GMT-06:00) Central Time - Chicago',
+                                '(GMT-05:00) Eastern Time - New York',
+                                '(GMT+00:00) Greenwich Mean Time - London',
+                                '(GMT+01:00) Central European Time - Paris',
+                                '(GMT+09:00) Japan Standard Time - Tokyo',
+                                '(GMT+10:00) Australian Eastern Time - Sydney'
+                            ].map((tz) => (
+                                <TouchableOpacity
+                                    key={tz}
+                                    style={styles.modalOption}
+                                    onPress={() => {
+                                        setTimezone(tz);
+                                        setTimezoneModalVisible(false);
+                                    }}
+                                >
+                                    <Text style={[styles.modalOptionText, timezone === tz && styles.selectedModalOptionText]}>{tz}</Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
@@ -581,7 +1007,7 @@ const styles = StyleSheet.create({
     },
     sidebarHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         padding: 16,
         paddingTop: 50,
         borderBottomWidth: 1,
@@ -600,6 +1026,10 @@ const styles = StyleSheet.create({
         color: '#9aa0a6',
         fontSize: 12,
         marginTop: 2,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     menuList: {
         flex: 1,
@@ -634,6 +1064,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
+    },
+    backToProjectsIcon: {
+        padding: 8,
     },
     backToProjectsText: {
         color: '#9aa0a6',
@@ -694,5 +1127,175 @@ const styles = StyleSheet.create({
         height: 22,
         textAlignVertical: 'center',
         marginLeft: 8,
+    },
+    settingsContainer: {
+        flex: 1,
+        backgroundColor: '#0f1112',
+    },
+    settingsContent: {
+        paddingVertical: 10,
+    },
+    settingsTitle: {
+        color: '#ffffff',
+        fontSize: 24,
+        fontWeight: '700',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    settingSection: {
+        marginBottom: 20,
+    },
+    settingLabel: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    placeholderText: {
+        color: '#9aa0a6',
+        fontSize: 14,
+        marginTop: 2,
+    },
+    settingInput: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 6,
+        padding: 12,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    settingsCard: {
+        backgroundColor: '#161717',
+        padding: 8,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#1f1f1f',
+        width: '100%',
+    },
+    cardTitle: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 4,
+        marginTop: 8,
+        paddingLeft: 8,
+    },
+    settingItem: {
+        marginBottom: 8,
+    },
+    settingItemWithBorder: {
+        marginBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+        paddingBottom: 8,
+    },
+    settingRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    buttonContainer: {
+        marginTop: 5,
+        marginBottom: 10,
+    },
+    dangerButton: {
+        backgroundColor: 'transparent',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 6,
+        marginBottom: 4,
+        alignItems: 'center',
+    },
+    secondaryButton: {
+        backgroundColor: 'transparent',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 6,
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    redButtonText: {
+        color: '#8B0000',
+    },
+    settingButton: {
+        backgroundColor: '#1f1f1f',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+        alignItems: 'center',
+    },
+    editModalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '90%',
+        maxHeight: '60%',
+    },
+    editInput: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 6,
+        padding: 12,
+        color: '#ffffff',
+        fontSize: 16,
+        marginBottom: 20,
+        textAlignVertical: 'top',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    cancelButton: {
+        backgroundColor: '#666',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 6,
+        flex: 1,
+        marginRight: 10,
+        alignItems: 'center',
+    },
+    saveButton: {
+        backgroundColor: '#8B0000',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 6,
+        flex: 1,
+        marginLeft: 10,
+        alignItems: 'center',
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 2,
+        borderColor: '#9aa0a6',
+        backgroundColor: 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkboxChecked: {
+        backgroundColor: '#8B0000',
+        borderColor: '#8B0000',
+    },
+    footerText: {
+        color: '#9aa0a6',
+        fontSize: 12,
+        textAlign: 'center',
+        marginTop: 2,
+        marginHorizontal: 20,
+    },
+    modalOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+    },
+    modalOptionText: {
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    selectedModalOptionText: {
+        color: '#8B0000',
     },
 });
