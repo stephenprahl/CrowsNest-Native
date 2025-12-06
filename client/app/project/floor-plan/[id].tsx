@@ -1,12 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Dimensions,
     Image,
+    Modal,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -17,18 +19,54 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function FloorPlanScreen() {
     const { id, name, image } = useLocalSearchParams<{ id: string; name: string; image: string }>();
     const router = useRouter();
+    const [filtersModalVisible, setFiltersModalVisible] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [query, setQuery] = useState('');
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                    {name || 'Floor Plan'}
-                </Text>
-                <View style={styles.headerRight} />
+            {/* Navbar */}
+            <View style={styles.navbar}>
+                {searchOpen ? (
+                    <>
+                        <TouchableOpacity onPress={() => { setSearchOpen(false); setQuery(''); }} style={styles.navBtn}>
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <TextInput
+                            autoFocus
+                            placeholder="Search floor plan"
+                            placeholderTextColor="#7a7f83"
+                            value={query}
+                            onChangeText={setQuery}
+                            style={styles.searchInput}
+                        />
+                        <View style={styles.navIcons}>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSearchOpen(false); setQuery(''); }}>
+                                <MaterialCommunityIcons name="close" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    <>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.navBtn}>
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.navTitle} numberOfLines={1}>
+                            {name || 'Floor Plan'}
+                        </Text>
+                        <View style={styles.navIcons}>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setFiltersModalVisible(true)}>
+                                <MaterialCommunityIcons name="eye" size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+                                <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn}>
+                                <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
             </View>
 
             {/* Floor Plan Image */}
@@ -39,6 +77,64 @@ export default function FloorPlanScreen() {
                     resizeMode="contain"
                 />
             </ScrollView>
+
+            {/* Filters Modal */}
+            <Modal
+                visible={filtersModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setFiltersModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity
+                        style={styles.modalBackdrop}
+                        activeOpacity={1}
+                        onPress={() => setFiltersModalVisible(false)}
+                    />
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Filters</Text>
+                        </View>
+                        <View style={styles.filtersList}>
+                            <TouchableOpacity style={styles.filterItem}>
+                                <Text style={styles.filterText}>All</Text>
+                                <MaterialCommunityIcons name="check" size={20} color="#8B0000" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.filterItem}>
+                                <Text style={styles.filterText}>Tasks</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.filterItem}>
+                                <Text style={styles.filterText}>Plan links</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.filterItem}>
+                                <Text style={styles.filterText}>Photos</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.filterItem}>
+                                <Text style={styles.filterText}>Attachments</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
+                            </TouchableOpacity>
+                            <View style={[styles.filterItem, styles.lastFilterItem, styles.markupColorsItem]}>
+                                <Text style={styles.filterText}>Markup colors</Text>
+                                <View style={styles.colorCircles}>
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B0000' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#006400' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#00008B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B8000' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B008B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#008B8B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#FF4500' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B4513' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#696969' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#2F4F4F' }]} />
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -48,7 +144,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#0f1112',
     },
-    header: {
+    navbar: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 12,
@@ -57,18 +153,32 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#151515',
     },
-    backBtn: {
+    navBtn: {
         padding: 4,
     },
-    headerTitle: {
+    navTitle: {
         flex: 1,
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '700',
         marginLeft: 12,
     },
-    headerRight: {
-        width: 32, // To balance the back button
+    navIcons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconBtn: {
+        marginLeft: 12,
+    },
+    searchInput: {
+        flex: 1,
+        color: '#fff',
+        paddingVertical: 0,
+        fontSize: 16,
+        lineHeight: 22,
+        height: 22,
+        textAlignVertical: 'center',
+        marginLeft: 8,
     },
     content: {
         flex: 1,
@@ -77,12 +187,72 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
     },
     floorPlanImage: {
-        width: SCREEN_WIDTH - 32,
+        width: SCREEN_WIDTH,
         height: SCREEN_HEIGHT - 200, // Adjust based on header height
-        backgroundColor: '#1f1f1f',
-        borderRadius: 8,
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalBackdrop: {
+        flex: 1,
+    },
+    modalContent: {
+        backgroundColor: '#121417',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        paddingBottom: 4,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+    },
+    modalTitle: {
+        color: '#8B0000',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    filtersList: {
+        paddingHorizontal: 16,
+        paddingTop: 0,
+        paddingBottom: 16,
+    },
+    filterItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    filterText: {
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    markupColorsItem: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+    },
+    colorCircles: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+    },
+    colorCircle: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#ffffff',
+    },
+    lastFilterItem: {
+        borderBottomWidth: 0,
     },
 });
