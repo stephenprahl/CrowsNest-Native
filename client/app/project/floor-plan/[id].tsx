@@ -68,35 +68,43 @@ export default function FloorPlanScreen() {
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Filters</Text>
-                            <TouchableOpacity onPress={() => setFiltersModalVisible(false)}>
-                                <MaterialCommunityIcons name="close" size={24} color="#9aa0a6" />
-                            </TouchableOpacity>
                         </View>
                         <View style={styles.filtersList}>
                             <TouchableOpacity style={styles.filterItem}>
-                                <MaterialCommunityIcons name="check" size={20} color="#8B0000" />
                                 <Text style={styles.filterText}>All</Text>
+                                <MaterialCommunityIcons name="check" size={20} color="#8B0000" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.filterItem}>
-                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                                 <Text style={styles.filterText}>Tasks</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.filterItem}>
-                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                                 <Text style={styles.filterText}>Plan links</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.filterItem}>
-                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                                 <Text style={styles.filterText}>Photos</Text>
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.filterItem}>
-                                <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
                                 <Text style={styles.filterText}>Attachments</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.filterItem}>
                                 <MaterialCommunityIcons name="checkbox-blank-outline" size={20} color="#9aa0a6" />
-                                <Text style={styles.filterText}>Markup colors</Text>
                             </TouchableOpacity>
+                            <View style={[styles.filterItem, styles.lastFilterItem, styles.markupColorsItem]}>
+                                <Text style={styles.filterText}>Markup colors</Text>
+                                <View style={styles.colorCircles}>
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B0000' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#006400' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#00008B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B8000' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B008B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#008B8B' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#FF4500' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#8B4513' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#696969' }]} />
+                                    <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#2F4F4F' }]} />
+                                </View>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -161,33 +169,55 @@ const styles = StyleSheet.create({
         backgroundColor: '#121417',
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
-        paddingBottom: 34,
+        paddingBottom: 4,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#1f1f1f',
     },
     modalTitle: {
-        color: '#ffffff',
+        color: '#8B0000',
         fontSize: 18,
         fontWeight: '700',
     },
     filtersList: {
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingTop: 0,
+        paddingBottom: 16,
     },
     filterItem: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 12,
-        paddingHorizontal: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
     },
     filterText: {
         color: '#ffffff',
         fontSize: 16,
-        marginLeft: 12,
+    },
+    markupColorsItem: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+    },
+    colorCircles: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+    },
+    colorCircle: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#ffffff',
+    },
+    lastFilterItem: {
+        borderBottomWidth: 0,
     },
 });
