@@ -1,7 +1,7 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
     Dimensions,
@@ -10,6 +10,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -60,7 +61,18 @@ export default function ProjectHomeScreen() {
     const [plans] = useState(SAMPLE_PLANS);
     const [viewMode, setViewMode] = useState<'thumbnail' | 'list'>('thumbnail');
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [query, setQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+    const textInputRef = useRef<TextInput>(null);
+
+    useEffect(() => {
+        if (activeSection === 'specifications' && searchOpen) {
+            setTimeout(() => {
+                textInputRef.current?.focus();
+            }, 100);
+        }
+    }, [searchOpen, activeSection]);
 
     const openSidebar = () => {
         setSidebarOpen(true);
@@ -154,8 +166,8 @@ export default function ProjectHomeScreen() {
                 return (
                     <View style={styles.contentSection}>
                         <MaterialCommunityIcons name="file-document-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Specifications</Text>
-                        <Text style={styles.contentSubtitle}>Project specifications</Text>
+                        <Text style={styles.contentTitle}>View all the most up-to-date project specifications on the go</Text>
+                        <Text style={styles.contentSubtitleSmall}>To upload specifications, use CrowsNest on the web</Text>
                     </View>
                 );
             case 'tasks':
@@ -215,36 +227,59 @@ export default function ProjectHomeScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header with hamburger menu */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
-                    <MaterialCommunityIcons name="menu" size={24} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                    {name || 'Project'}
-                </Text>
-                <View style={styles.headerRight}>
-                    {activeSection === 'plans' ? (
-                        <>
-                            <TouchableOpacity style={styles.iconBtn} onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}>
-                                <MaterialCommunityIcons name={plansDropdownOpen ? "fullscreen-exit" : "fullscreen"} size={22} color="#fff" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtn} onPress={() => setViewMode(viewMode === 'thumbnail' ? 'list' : 'thumbnail')}>
-                                <MaterialCommunityIcons name={viewMode === 'thumbnail' ? "view-list" : "view-grid"} size={22} color="#fff" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtn} onPress={() => setHistoryModalOpen(true)}>
-                                <MaterialCommunityIcons name="history" size={22} color="#fff" />
-                            </TouchableOpacity>
-                        </>
-                    ) : (
-                        <>
-                            <TouchableOpacity style={styles.iconBtn}>
-                                <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtn}>
-                                <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </View>
+                {activeSection === 'specifications' && searchOpen ? (
+                    <>
+                        <TouchableOpacity onPress={() => { setSearchOpen(false); setQuery(''); }} style={styles.iconBtn}>
+                            <MaterialIcons name="arrow-back" size={22} color="#fff" />
+                        </TouchableOpacity>
+                        <TextInput
+                            ref={textInputRef}
+                            autoFocus
+                            placeholder="Spec section number or name"
+                            placeholderTextColor="#7a7f83"
+                            value={query}
+                            onChangeText={setQuery}
+                            style={styles.searchInputInHeader}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
+                            <MaterialCommunityIcons name="menu" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle} numberOfLines={1}>
+                            {activeSection === 'specifications' ? 'Specifications' : (name || 'Project')}
+                        </Text>
+                        <View style={styles.headerRight}>
+                            {activeSection === 'specifications' ? (
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
+                                    <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                                </TouchableOpacity>
+                            ) : activeSection === 'plans' ? (
+                                <>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}>
+                                        <MaterialCommunityIcons name={plansDropdownOpen ? "fullscreen-exit" : "fullscreen"} size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => setViewMode(viewMode === 'thumbnail' ? 'list' : 'thumbnail')}>
+                                        <MaterialCommunityIcons name={viewMode === 'thumbnail' ? "view-list" : "view-grid"} size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => setHistoryModalOpen(true)}>
+                                        <MaterialCommunityIcons name="history" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <>
+                                    <TouchableOpacity style={styles.iconBtn}>
+                                        <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.iconBtn}>
+                                        <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
+                    </>
+                )}
             </View>
 
             {/* Main content area */}
@@ -506,11 +541,19 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
         marginTop: 16,
+        textAlign: 'center',
     },
     contentSubtitle: {
         color: '#9aa0a6',
         fontSize: 14,
         marginTop: 8,
+        textAlign: 'center',
+    },
+    contentSubtitleSmall: {
+        color: '#9aa0a6',
+        fontSize: 12,
+        marginTop: 8,
+        textAlign: 'center',
     },
     overlay: {
         position: 'absolute',
@@ -641,5 +684,15 @@ const styles = StyleSheet.create({
     recentPlanName: {
         color: '#ffffff',
         fontSize: 16,
+    },
+    searchInputInHeader: {
+        flex: 1,
+        color: '#fff',
+        paddingVertical: 0,
+        fontSize: 16,
+        lineHeight: 22,
+        height: 22,
+        textAlignVertical: 'center',
+        marginLeft: 8,
     },
 });
