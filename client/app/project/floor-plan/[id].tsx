@@ -151,10 +151,9 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 16,
     },
     floorPlanImage: {
-        width: SCREEN_WIDTH - 32,
+        width: SCREEN_WIDTH,
         height: SCREEN_HEIGHT - 200, // Adjust based on header height
     },
     modalOverlay: {
