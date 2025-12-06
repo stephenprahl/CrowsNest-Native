@@ -106,7 +106,12 @@ export default function ProjectHomeScreen() {
                         {plansDropdownOpen ? (
                             <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansList}>
                                 {plans.map((plan) => (
-                                    <TouchableOpacity key={plan.id} style={styles.planCard} activeOpacity={0.8}>
+                                    <TouchableOpacity
+                                        key={plan.id}
+                                        style={styles.planCard}
+                                        activeOpacity={0.8}
+                                        onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}&image=${plan.image}`)}
+                                    >
                                         <View style={styles.planImageContainer}>
                                             <Image source={{ uri: plan.image }} style={styles.planImage} resizeMode="cover" />
                                         </View>

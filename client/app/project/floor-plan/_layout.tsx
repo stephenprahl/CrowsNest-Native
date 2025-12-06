@@ -1,10 +1,9 @@
 import { Stack } from 'expo-router';
 
-export default function ProjectLayout() {
+export default function FloorPlanLayout() {
     return (
         <Stack>
             <Stack.Screen name="[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="floor-plan" options={{ headerShown: false }} />
         </Stack>
     );
 }
