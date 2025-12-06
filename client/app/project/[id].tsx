@@ -42,6 +42,13 @@ type Plan = {
     image: any;
 };
 
+type Person = {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+};
+
 const SAMPLE_PLANS: Plan[] = [
     { id: '1', name: 'Floor Plan - Level 1', image: require('../../assets/images/plan-1.jpg') },
     { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
@@ -53,7 +60,7 @@ const RECENTLY_VIEWED_PLANS: Plan[] = [
 ];
 
 export default function ProjectHomeScreen() {
-    const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+    const { name } = useLocalSearchParams<{ id: string; name: string }>();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState('plans');
@@ -86,7 +93,7 @@ export default function ProjectHomeScreen() {
     const [sendEmailChecked, setSendEmailChecked] = useState(false);
     const [requireCostChecked, setRequireCostChecked] = useState(false);
 
-    const [lastSync, setLastSync] = useState('Never');
+    const [lastSync] = useState('Never');
 
     const [manpowerUnitModalVisible, setManpowerUnitModalVisible] = useState(false);
     const [manpowerUnit, setManpowerUnit] = useState('man-hours');
@@ -109,6 +116,8 @@ export default function ProjectHomeScreen() {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editingField, setEditingField] = useState<'projectName' | 'projectCode' | 'address'>('projectName');
     const [editingValue, setEditingValue] = useState('');
+
+    const [people] = useState<Person[]>([]);
 
     useEffect(() => {
         if (activeSection === 'specifications' && searchOpen) {
@@ -248,10 +257,35 @@ export default function ProjectHomeScreen() {
                 );
             case 'people':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="account-group-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>People</Text>
-                        <Text style={styles.contentSubtitle}>Project team members</Text>
+                    <View style={styles.peopleContainer}>
+                        <ScrollView style={styles.peopleScrollView} contentContainerStyle={styles.peopleContent}>
+                            {people.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <MaterialCommunityIcons name="account-group-outline" size={60} color="#8B0000" />
+                                    <Text style={styles.contentTitle}>Invite your team</Text>
+                                    <Text style={styles.contentSubtitle}>Organize your project team and manage permission levels</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <Text style={styles.sectionTitle}>Team Members</Text>
+                                    <View style={styles.peopleList}>
+                                        {people.map((person) => (
+                                            <View key={person.id} style={styles.personItem}>
+                                                <MaterialCommunityIcons name="account-circle" size={40} color="#8B0000" />
+                                                <View style={styles.personInfo}>
+                                                    <Text style={styles.personName}>{person.name}</Text>
+                                                    {person.email && <Text style={styles.personDetail}>{person.email}</Text>}
+                                                    {person.phone && <Text style={styles.personDetail}>{person.phone}</Text>}
+                                                </View>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </>
+                            )}
+                        </ScrollView>
+                        <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => router.push('/people')}>
+                            <MaterialIcons name="add" size={28} color="#fff" />
+                        </TouchableOpacity>
                     </View>
                 );
             case 'settings':
@@ -406,7 +440,7 @@ export default function ProjectHomeScreen() {
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle} numberOfLines={1}>
-                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : (name || 'Project')}
+                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')}
                         </Text>
                         <View style={styles.headerRight}>
                             {activeSection === 'specifications' ? (
@@ -428,14 +462,9 @@ export default function ProjectHomeScreen() {
                             ) : activeSection === 'settings' ? (
                                 <View />
                             ) : (
-                                <>
-                                    <TouchableOpacity style={styles.iconBtn}>
-                                        <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.iconBtn}>
-                                        <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
-                                    </TouchableOpacity>
-                                </>
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/people')}>
+                                    <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                                </TouchableOpacity>
                             )}
                         </View>
                     </>
@@ -802,6 +831,7 @@ export default function ProjectHomeScreen() {
                     </View>
                 </Pressable>
             </Modal>
+
         </SafeAreaView>
     );
 }
@@ -1297,5 +1327,156 @@ const styles = StyleSheet.create({
     },
     selectedModalOptionText: {
         color: '#8B0000',
+    },
+    peopleContainer: {
+        flex: 1,
+    },
+    peopleScrollView: {
+        flex: 1,
+    },
+    peopleContent: {
+        padding: 20,
+    },
+    inviteButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 20,
+    },
+    inviteButton: {
+        backgroundColor: '#8B0000',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        flex: 0.45,
+        justifyContent: 'center',
+    },
+    inviteButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 10,
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+    },
+    peopleList: {
+        marginTop: 10,
+    },
+    personItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    personInfo: {
+        marginLeft: 15,
+        flex: 1,
+    },
+    personName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    personDetail: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginTop: 2,
+    },
+    contactsModalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '90%',
+        maxHeight: '70%',
+    },
+    contactsList: {
+        maxHeight: 300,
+        marginBottom: 20,
+    },
+    contactItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    contactName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    contactDetail: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginTop: 2,
+    },
+    fab: {
+        position: 'absolute',
+        right: 30,
+        bottom: 76,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#8B0000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 6,
+    },
+    inviteOptionsModal: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '80%',
+        padding: 20,
+    },
+    inviteOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        backgroundColor: '#1f1f1f',
+        marginBottom: 10,
+    },
+    inviteOptionText: {
+        color: '#ffffff',
+        fontSize: 16,
+        marginLeft: 15,
+    },
+    inviteContainer: {
+        flex: 1,
+        padding: 20,
+        paddingTop: 10,
+    },
+    deviceContactsText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 5,
+        alignSelf: 'flex-start',
+    },
+    connectContactsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    connectContactsText: {
+        color: '#8B0000',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 10,
     },
 });
