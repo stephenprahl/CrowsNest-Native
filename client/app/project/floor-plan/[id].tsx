@@ -25,6 +25,7 @@ const planImages = {
     const [filtersModalVisible, setFiltersModalVisible] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const [menuModalVisible, setMenuModalVisible] = useState(false);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -64,7 +65,7 @@ const planImages = {
                             <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
                                 <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconBtn}>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuModalVisible(true)}>
                                 <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
                             </TouchableOpacity>
                         </View>
@@ -133,6 +134,61 @@ const planImages = {
                                     <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#696969' }]} />
                                     <TouchableOpacity style={[styles.colorCircle, { backgroundColor: '#2F4F4F' }]} />
                                 </View>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Menu Modal */}
+            <Modal
+                visible={menuModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setMenuModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity
+                        style={styles.modalBackdrop}
+                        activeOpacity={1}
+                        onPress={() => setMenuModalVisible(false)}
+                    />
+                    <View style={styles.menuModalContent}>
+                        <View style={styles.menuItemsRow}>
+                            <TouchableOpacity style={styles.menuItem}>
+                                <MaterialCommunityIcons name="link" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem}>
+                                <MaterialCommunityIcons name="file-pdf-box" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem}>
+                                <MaterialCommunityIcons name="crop" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem}>
+                                <MaterialCommunityIcons name="qrcode" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.labelsRow}>
+                            <Text style={styles.labelText}>Share link</Text>
+                            <Text style={styles.labelText}>Export PDF</Text>
+                            <Text style={styles.labelText}>Share crop plan</Text>
+                            <Text style={styles.labelText}>QR code</Text>
+                        </View>
+                        <View style={styles.menuBorder} />
+                        <View style={styles.bottomContainer}>
+                            <View style={styles.menuColumn}>
+                                <TouchableOpacity style={styles.menuColumnItem}>
+                                    <Text style={styles.menuColumnItemText}>Plan details</Text>
+                                    <MaterialCommunityIcons name="information" size={24} color="#fff" />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.menuColumnItem}>
+                                    <Text style={styles.menuColumnItemText}>Tasklist</Text>
+                                    <MaterialCommunityIcons name="format-list-checks" size={24} color="#fff" />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.menuColumnItem, styles.lastMenuColumnItem]}>
+                                    <Text style={styles.deleteItemText}>Delete plan</Text>
+                                    <MaterialCommunityIcons name="delete" size={24} color="#8B0000" />
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </View>
@@ -257,5 +313,75 @@ const styles = StyleSheet.create({
     },
     lastFilterItem: {
         borderBottomWidth: 0,
+    },
+    menuModalContent: {
+        backgroundColor: '#121417',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        padding: 16,
+    },
+    menuItemsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+    },
+    menuItem: {
+        width: 50,
+        height: 50,
+        backgroundColor: '#1f1f1f',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuItemText: {
+        color: '#fff',
+        fontSize: 10,
+        textAlign: 'center',
+        marginTop: 4,
+    },
+    menuBorder: {
+        height: 1,
+        backgroundColor: '#1f1f1f',
+        marginVertical: 16,
+    },
+    menuColumn: {
+        width: '100%',
+    },
+    menuColumnItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
+    },
+    menuColumnItemText: {
+        color: '#fff',
+        fontSize: 16,
+    },
+    bottomContainer: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    lastMenuColumnItem: {
+        borderBottomWidth: 0,
+    },
+    labelsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    labelText: {
+        color: '#fff',
+        fontSize: 10,
+        textAlign: 'center',
+        width: 70,
+    },
+    deleteItemText: {
+        color: '#8B0000',
+        fontSize: 16,
     },
 });
