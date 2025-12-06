@@ -297,7 +297,7 @@ export default function Index() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Delete Project</Text>
-            <Text style={styles.modalText}>Are you sure you want to delete "{selectedProject?.name}"? This action cannot be undone.</Text>
+            <Text style={styles.modalText}>Are you sure you want to delete &quot;{selectedProject?.name}&quot;? This action cannot be undone.</Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalButton}

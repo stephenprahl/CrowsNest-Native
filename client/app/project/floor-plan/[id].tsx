@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Dimensions,
-    Image,
     Modal,
     ScrollView,
     StyleSheet,
@@ -16,7 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function FloorPlanScreen() {
+const planImages = {
+    '1': require('../../../assets/images/plan-1.jpg'),
+    '2': require('../../../assets/images/plan-2.jpg'),
+}; export default function FloorPlanScreen() {
     const { id, name, image } = useLocalSearchParams<{ id: string; name: string; image: string }>();
     const router = useRouter();
     const [filtersModalVisible, setFiltersModalVisible] = useState(false);
@@ -72,9 +75,9 @@ export default function FloorPlanScreen() {
             {/* Floor Plan Image */}
             <ScrollView style={styles.content} contentContainerStyle={styles.imageContainer}>
                 <Image
-                    source={{ uri: image }}
+                    source={planImages[id as keyof typeof planImages]}
                     style={styles.floorPlanImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                 />
             </ScrollView>
 

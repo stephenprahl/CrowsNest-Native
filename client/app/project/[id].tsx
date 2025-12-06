@@ -1,10 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Animated,
     Dimensions,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -37,15 +37,12 @@ const MENU_ITEMS: MenuItem[] = [
 type Plan = {
     id: string;
     name: string;
-    image: string;
+    image: any;
 };
 
 const SAMPLE_PLANS: Plan[] = [
-    { id: '1', name: 'Floor Plan - Level 1', image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&h=300&fit=crop' },
-    { id: '2', name: 'Floor Plan - Level 2', image: 'https://images.unsplash.com/photo-1574691250077-03a929faece5?w=400&h=300&fit=crop' },
-    { id: '3', name: 'Electrical Layout', image: 'https://images.unsplash.com/photo-1581094794329-c8112d89af12?w=400&h=300&fit=crop' },
-    { id: '4', name: 'Plumbing Layout', image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop' },
-    { id: '5', name: 'HVAC System', image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop' },
+    { id: '1', name: 'Floor Plan - Level 1', image: require('../../assets/images/plan-1.jpg') },
+    { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
 ];
 
 export default function ProjectHomeScreen() {
@@ -110,10 +107,10 @@ export default function ProjectHomeScreen() {
                                         key={plan.id}
                                         style={styles.planCard}
                                         activeOpacity={0.8}
-                                        onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}&image=${plan.image}`)}
+                                        onPress={() => router.push(`/project/floor-plan/${plan.id}?name=${plan.name}`)}
                                     >
                                         <View style={styles.planImageContainer}>
-                                            <Image source={{ uri: plan.image }} style={styles.planImage} resizeMode="cover" />
+                                            <Image source={plan.image} style={styles.planImage} contentFit="cover" />
                                         </View>
                                         <View style={styles.planCardOverlay}>
                                             <Text style={styles.planCardId}>ID: {plan.id}</Text>
