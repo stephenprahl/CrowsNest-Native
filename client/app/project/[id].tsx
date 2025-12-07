@@ -129,6 +129,8 @@ export default function ProjectHomeScreen() {
     const [adminModalVisible, setAdminModalVisible] = useState(false);
     const [accessModalVisible, setAccessModalVisible] = useState(false);
 
+    const [photosModalVisible, setPhotosModalVisible] = useState(false);
+
     useEffect(() => {
         if (activeSection === 'specifications' && searchOpen) {
             setTimeout(() => {
@@ -243,10 +245,10 @@ export default function ProjectHomeScreen() {
                 );
             case 'photos':
                 return (
-                    <View style={styles.contentSection}>
+                    <View style={[styles.contentSection, {paddingTop: 50, justifyContent: 'flex-start'}]}>
                         <MaterialCommunityIcons name="image-multiple-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Photos</Text>
-                        <Text style={styles.contentSubtitle}>Project photo gallery</Text>
+                        <Text style={styles.contentTitle}>Add photos, videos and 360° photos</Text>
+                        <Text style={styles.contentSubtitle}>All photos stay organized here to help you and your team monitor progress on your project.</Text>
                     </View>
                 );
             case 'forms':
@@ -485,12 +487,18 @@ export default function ProjectHomeScreen() {
                         <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' ? 2 : 1}>
+                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' || activeSection === 'photos' ? 2 : 1}>
                             {activeSection === 'files' ? (
                                 <>
                                     <Text style={styles.headerMainTitle}>Files</Text>
                                     {'\n'}
                                     <Text style={styles.headerSubTitle}>All Files</Text>
+                                </>
+                            ) : activeSection === 'photos' ? (
+                                <>
+                                    <Text style={styles.headerMainTitle}>Photos</Text>
+                                    {'\n'}
+                                    <Text style={styles.headerSubTitle}>All Photos</Text>
                                 </>
                             ) : (
                                 activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')
@@ -519,6 +527,10 @@ export default function ProjectHomeScreen() {
                                 <TouchableOpacity style={styles.iconBtn} onPress={() => setFilesSearchOpen(true)}>
                                     <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
                                 </TouchableOpacity>
+                            ) : activeSection === 'photos' ? (
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
+                                    <MaterialCommunityIcons name="fullscreen" size={22} color="#fff" />
+                                </TouchableOpacity>
                             ) : (
                                 <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/people')}>
                                     <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
@@ -534,22 +546,26 @@ export default function ProjectHomeScreen() {
                 {renderContent()}
             </View>
 
-            {activeSection === 'files' && (
+            {(activeSection === 'files' || activeSection === 'photos') && (
                 <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={async () => {
-                    alert('Button pressed');
-                    try {
-                        const result = await DocumentPicker.getDocumentAsync({
-                            type: '*/*',
-                            copyToCacheDirectory: true,
-                        });
-                        if (result.type === 'success') {
-                            alert(`File selected: ${result.name}`);
-                            // Here you can handle the file upload to your server or Filestack
-                        } else {
-                            alert('File selection cancelled');
+                    if (activeSection === 'files') {
+                        alert('Button pressed');
+                        try {
+                            const result = await DocumentPicker.getDocumentAsync({
+                                type: '*/*',
+                                copyToCacheDirectory: true,
+                            });
+                            if (result.type === 'success') {
+                                alert(`File selected: ${result.name}`);
+                                // Here you can handle the file upload to your server or Filestack
+                            } else {
+                                alert('File selection cancelled');
+                            }
+                        } catch (error) {
+                            alert(`Error picking file: ${error.message}`);
                         }
-                    } catch (error) {
-                        alert(`Error picking file: ${error.message}`);
+                    } else if (activeSection === 'photos') {
+                        setPhotosModalVisible(true);
                     }
                 }}>
                     <MaterialIcons name="add" size={28} color="#fff" />
@@ -1004,6 +1020,35 @@ export default function ProjectHomeScreen() {
                             </TouchableOpacity>
                         </View>
                     </TouchableOpacity>
+                </TouchableOpacity>
+            </Modal>
+
+            {/* Photos Modal */}
+            <Modal
+                visible={photosModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setPhotosModalVisible(false)}
+            >
+                <TouchableOpacity 
+                    style={styles.photosModalOverlay} 
+                    activeOpacity={1} 
+                    onPress={() => setPhotosModalVisible(false)}
+                >
+                    <View style={styles.photosModalContainer}>
+                        <TouchableOpacity style={styles.photosModalOption} onPress={() => { setPhotosModalVisible(false); alert('Take photo'); }}>
+                            <MaterialCommunityIcons name="camera" size={20} color="#888" />
+                            <Text style={styles.photosModalOptionText}>Take photo</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.photosModalOption} onPress={() => { setPhotosModalVisible(false); alert('Upload from device'); }}>
+                            <MaterialCommunityIcons name="upload" size={20} color="#888" />
+                            <Text style={styles.photosModalOptionText}>Upload from device</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.photosModalOption} onPress={() => { setPhotosModalVisible(false); alert('Take 360° photo'); }}>
+                            <MaterialCommunityIcons name="panorama" size={20} color="#888" />
+                            <Text style={styles.photosModalOptionText}>Take 360° photo</Text>
+                        </TouchableOpacity>
+                    </View>
                 </TouchableOpacity>
             </Modal>
 
@@ -1962,5 +2007,30 @@ const styles = StyleSheet.create({
     headerSubTitle: {
         fontSize: 12,
         color: '#9aa0a6',
+    },
+    photosModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    photosModalContainer: {
+        backgroundColor: '#1f1f1f',
+        width: '100%',
+        paddingHorizontal: 0,
+        paddingTop: 10,
+        paddingBottom: 0,
+    },
+    photosModalOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        marginBottom: 5,
+    },
+    photosModalOptionText: {
+        fontSize: 16,
+        color: '#ffffff',
+        marginLeft: 15,
     },
 });
