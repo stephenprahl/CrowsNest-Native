@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
@@ -70,6 +71,8 @@ export default function ProjectHomeScreen() {
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const [filesSearchOpen, setFilesSearchOpen] = useState(false);
+    const [filesQuery, setFilesQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
 
@@ -256,11 +259,13 @@ export default function ProjectHomeScreen() {
                 );
             case 'files':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="folder-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Files</Text>
-                        <Text style={styles.contentSubtitle}>Project files and documents</Text>
-                    </View>
+                    <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansContentContainer}>
+                        <View style={styles.contentSection}>
+                            <MaterialCommunityIcons name="folder-outline" size={60} color="#8B0000" />
+                            <Text style={styles.contentTitle}>Add files to centralize your project documentation</Text>
+                            <Text style={styles.contentSubtitle}>Keep track of specifications, project submittals, or any other documents that are shared with your team.</Text>
+                        </View>
+                    </ScrollView>
                 );
             case 'people':
                 return (
@@ -452,18 +457,26 @@ export default function ProjectHomeScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header with hamburger menu */}
             <View style={styles.header}>
-                {activeSection === 'specifications' && searchOpen ? (
+                {(activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) ? (
                     <>
-                        <TouchableOpacity onPress={() => { setSearchOpen(false); setQuery(''); }} style={styles.iconBtn}>
+                        <TouchableOpacity onPress={() => { 
+                            if (activeSection === 'specifications') { 
+                                setSearchOpen(false); 
+                                setQuery(''); 
+                            } else { 
+                                setFilesSearchOpen(false); 
+                                setFilesQuery(''); 
+                            } 
+                        }} style={styles.iconBtn}>
                             <MaterialIcons name="arrow-back" size={22} color="#fff" />
                         </TouchableOpacity>
                         <TextInput
                             ref={textInputRef}
                             autoFocus
-                            placeholder="Spec section number or name"
+                            placeholder={activeSection === 'specifications' ? "Spec section number or name" : "Search files"}
                             placeholderTextColor="#7a7f83"
-                            value={query}
-                            onChangeText={setQuery}
+                            value={activeSection === 'specifications' ? query : filesQuery}
+                            onChangeText={activeSection === 'specifications' ? setQuery : setFilesQuery}
                             style={styles.searchInputInHeader}
                         />
                     </>
@@ -472,8 +485,16 @@ export default function ProjectHomeScreen() {
                         <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle} numberOfLines={1}>
-                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')}
+                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' ? 2 : 1}>
+                            {activeSection === 'files' ? (
+                                <>
+                                    <Text style={styles.headerMainTitle}>Files</Text>
+                                    {'\n'}
+                                    <Text style={styles.headerSubTitle}>All Files</Text>
+                                </>
+                            ) : (
+                                activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')
+                            )}
                         </Text>
                         <View style={styles.headerRight}>
                             {activeSection === 'specifications' ? (
@@ -494,6 +515,10 @@ export default function ProjectHomeScreen() {
                                 </>
                             ) : activeSection === 'settings' ? (
                                 <View />
+                            ) : activeSection === 'files' ? (
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => setFilesSearchOpen(true)}>
+                                    <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                                </TouchableOpacity>
                             ) : (
                                 <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/people')}>
                                     <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
@@ -508,6 +533,28 @@ export default function ProjectHomeScreen() {
             <View style={styles.content}>
                 {renderContent()}
             </View>
+
+            {activeSection === 'files' && (
+                <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={async () => {
+                    alert('Button pressed');
+                    try {
+                        const result = await DocumentPicker.getDocumentAsync({
+                            type: '*/*',
+                            copyToCacheDirectory: true,
+                        });
+                        if (result.type === 'success') {
+                            alert(`File selected: ${result.name}`);
+                            // Here you can handle the file upload to your server or Filestack
+                        } else {
+                            alert('File selection cancelled');
+                        }
+                    } catch (error) {
+                        alert(`Error picking file: ${error.message}`);
+                    }
+                }}>
+                    <MaterialIcons name="add" size={28} color="#fff" />
+                </TouchableOpacity>
+            )}
 
             {/* Sidebar overlay */}
             {sidebarOpen && (
@@ -1567,6 +1614,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 6,
+        zIndex: 102,
     },
     inviteOptionsModal: {
         backgroundColor: '#121417',
@@ -1905,5 +1953,14 @@ const styles = StyleSheet.create({
         color: '#9aa0a6',
         marginTop: 2,
         fontStyle: 'italic',
+    },
+    headerMainTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#ffffff',
+    },
+    headerSubTitle: {
+        fontSize: 12,
+        color: '#9aa0a6',
     },
 });
