@@ -73,6 +73,8 @@ export default function ProjectHomeScreen() {
     const [query, setQuery] = useState('');
     const [filesSearchOpen, setFilesSearchOpen] = useState(false);
     const [filesQuery, setFilesQuery] = useState('');
+    const [plansSearchOpen, setPlansSearchOpen] = useState(false);
+    const [plansQuery, setPlansQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
 
@@ -167,6 +169,18 @@ export default function ProjectHomeScreen() {
                 return (
                     <ScrollView style={styles.plansListContainer} contentContainerStyle={styles.plansContentContainer}>
                         <View style={styles.plansWrapper}>
+                            <View style={styles.searchContainer}>
+                                <TextInput
+                                    placeholder="Search plans..."
+                                    placeholderTextColor="#7a7f83"
+                                    value={plansQuery}
+                                    onChangeText={setPlansQuery}
+                                    style={styles.searchInput}
+                                />
+                                <TouchableOpacity style={styles.qrIcon}>
+                                    <MaterialCommunityIcons name="qrcode-scan" size={20} color="#9aa0a6" />
+                                </TouchableOpacity>
+                            </View>
                             <TouchableOpacity
                                 style={styles.plansDropdown}
                                 onPress={() => setPlansDropdownOpen(!plansDropdownOpen)}
@@ -174,7 +188,7 @@ export default function ProjectHomeScreen() {
                             >
                                 <View style={styles.plansDropdownLeft}>
                                     <MaterialCommunityIcons name="folder-outline" size={20} color="#9aa0a6" />
-                                    <Text style={styles.plansDropdownText}>All Plans</Text>
+                                    <Text style={styles.plansDropdownText}>Unfiled plans</Text>
                                 </View>
                                 <View style={styles.plansDropdownRight}>
                                     <Text style={styles.plansCount}>({plans.length} plans)</Text>
@@ -487,7 +501,7 @@ export default function ProjectHomeScreen() {
                         <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' || activeSection === 'photos' ? 2 : 1}>
+                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' || activeSection === 'photos' || activeSection === 'plans' ? 2 : 1}>
                             {activeSection === 'files' ? (
                                 <>
                                     <Text style={styles.headerMainTitle}>Files</Text>
@@ -499,6 +513,12 @@ export default function ProjectHomeScreen() {
                                     <Text style={styles.headerMainTitle}>Photos</Text>
                                     {'\n'}
                                     <Text style={styles.headerSubTitle}>All Photos</Text>
+                                </>
+                            ) : activeSection === 'plans' ? (
+                                <>
+                                    <Text style={styles.headerMainTitle}>Plans</Text>
+                                    {'\n'}
+                                    <Text style={styles.headerSubTitle}>All tasks on plans</Text>
                                 </>
                             ) : (
                                 activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')
@@ -1124,7 +1144,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     plansDropdownText: {
-        color: '#ffffff',
+        color: '#cccccc',
         fontSize: 15,
         fontWeight: '600',
         marginLeft: 10,
@@ -1137,6 +1157,25 @@ const styles = StyleSheet.create({
     },
     plansDropdownChevron: {
         marginLeft: 2,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        borderRadius: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 12,
+    },
+    searchInput: {
+        flex: 1,
+        color: '#ffffff',
+        fontSize: 16,
+        paddingVertical: 0,
+    },
+    qrIcon: {
+        marginLeft: 8,
+        padding: 4,
     },
     plansContent: {
         flex: 1,
@@ -1162,30 +1201,32 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
     planCard: {
-        backgroundColor: '#1f1f1f',
+        borderWidth: 1,
+        borderColor: '#333333',
         borderRadius: 6,
-        marginBottom: 12,
+        marginBottom: 16,
+        marginRight: 8,
+        marginLeft: 8,
         overflow: 'hidden',
-        width: '48%',
+        width: '45%',
     },
     planImageContainer: {
         padding: 8,
         paddingBottom: 0,
-        backgroundColor: '#1f1f1f',
     },
     planImage: {
         width: '100%',
-        height: 120,
+        height: 100,
         backgroundColor: '#1f1f1f',
         borderRadius: 4,
     },
     planCardOverlay: {
-        padding: 12,
-        backgroundColor: '#1f1f1f',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         alignItems: 'center',
     },
     planCardTitle: {
-        color: '#ffffff',
+        color: '#cccccc',
         fontSize: 15,
         fontWeight: '600',
         textAlign: 'center',
@@ -1199,14 +1240,15 @@ const styles = StyleSheet.create({
     planListItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1f1f1f',
+        borderWidth: 1,
+        borderColor: '#333333',
         borderRadius: 6,
-        marginBottom: 12,
+        marginBottom: 16,
         padding: 12,
         width: '100%',
     },
     planListText: {
-        color: '#ffffff',
+        color: '#cccccc',
         fontSize: 15,
         fontWeight: '600',
         marginLeft: 12,
