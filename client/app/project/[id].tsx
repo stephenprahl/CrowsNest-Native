@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Animated,
@@ -15,7 +15,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.75;
@@ -50,6 +50,16 @@ type Person = {
     phone?: string;
 };
 
+type Task = {
+    id: string;
+    title: string;
+    description?: string;
+    completed: boolean;
+    dueDate?: string;
+    assignee?: string;
+    priority: 'low' | 'medium' | 'high';
+};
+
 const SAMPLE_PLANS: Plan[] = [
     { id: '1', name: 'Floor Plan - Level 1', image: require('../../assets/images/plan-1.jpg') },
     { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
@@ -60,21 +70,64 @@ const RECENTLY_VIEWED_PLANS: Plan[] = [
     { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
 ];
 
+const SAMPLE_TASKS: Task[] = [
+    {
+        id: '1',
+        title: 'Review electrical plans',
+        description: 'Check all electrical wiring and outlet placements',
+        completed: false,
+        dueDate: '2024-01-15',
+        assignee: 'John Doe',
+        priority: 'high',
+    },
+    {
+        id: '2',
+        title: 'Order materials',
+        description: 'Purchase lumber, concrete, and roofing materials',
+        completed: true,
+        dueDate: '2024-01-10',
+        assignee: 'Jane Smith',
+        priority: 'medium',
+    },
+    {
+        id: '3',
+        title: 'Schedule inspection',
+        description: 'Contact local building department for foundation inspection',
+        completed: false,
+        dueDate: '2024-01-20',
+        assignee: 'Bob Johnson',
+        priority: 'high',
+    },
+    {
+        id: '4',
+        title: 'Update project timeline',
+        description: 'Adjust timeline based on recent delays',
+        completed: false,
+        dueDate: '2024-01-12',
+        assignee: 'Alice Brown',
+        priority: 'low',
+    },
+];
+
 export default function ProjectHomeScreen() {
     const { name } = useLocalSearchParams<{ id: string; name: string }>();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState('plans');
     const [plansDropdownOpen, setPlansDropdownOpen] = useState(true);
+    const [tasksDropdownOpen, setTasksDropdownOpen] = useState(true);
     const [plans] = useState(SAMPLE_PLANS);
+    const [tasks, setTasks] = useState<Task[]>(SAMPLE_TASKS);
     const [viewMode, setViewMode] = useState<'thumbnail' | 'list'>('thumbnail');
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [filesSearchOpen, setFilesSearchOpen] = useState(false);
     const [filesQuery, setFilesQuery] = useState('');
-    const [plansSearchOpen, setPlansSearchOpen] = useState(false);
     const [plansQuery, setPlansQuery] = useState('');
+    const [tasksSearchOpen, setTasksSearchOpen] = useState(false);
+    const [tasksQuery, setTasksQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
 
@@ -109,6 +162,13 @@ export default function ProjectHomeScreen() {
     const [archiveTasksModalVisible, setArchiveTasksModalVisible] = useState(false);
     const [archiveTasksOption, setArchiveTasksOption] = useState('After 30 days');
 
+    const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
+    const [addTaskModalVisible, setAddTaskModalVisible] = useState(false);
+    const [newTaskTitle, setNewTaskTitle] = useState('');
+    const [newTaskDescription, setNewTaskDescription] = useState('');
+    const [newTaskDueDate, setNewTaskDueDate] = useState('');
+    const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+
     const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);
     const [measurementUnit, setMeasurementUnit] = useState('US/Imperial');
 
@@ -126,6 +186,50 @@ export default function ProjectHomeScreen() {
 
     const removePerson = (personId: string) => {
         setPeople(prev => prev.filter(person => person.id !== personId));
+    };
+
+    const toggleTaskCompletion = (taskId: string) => {
+        setTasks(prev => prev.map(task =>
+            task.id === taskId ? { ...task, completed: !task.completed } : task
+        ));
+    };
+
+    const addTask = () => {
+        if (newTaskTitle.trim()) {
+            const newTask: Task = {
+                id: Date.now().toString(),
+                title: newTaskTitle.trim(),
+                description: newTaskDescription.trim() || undefined,
+                completed: false,
+                dueDate: newTaskDueDate || undefined,
+                priority: newTaskPriority,
+            };
+            setTasks(prev => [...prev, newTask]);
+            setNewTaskTitle('');
+            setNewTaskDescription('');
+            setNewTaskDueDate('');
+            setNewTaskPriority('medium');
+            setAddTaskModalVisible(false);
+        }
+    };
+
+    const deleteTask = (taskId: string) => {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+    };
+
+    const filteredTasks = tasks.filter(task => {
+        if (taskFilter === 'completed') return task.completed;
+        if (taskFilter === 'pending') return !task.completed;
+        return true;
+    });
+
+    const getPriorityColor = (priority: 'low' | 'medium' | 'high') => {
+        switch (priority) {
+            case 'low': return '#4CAF50';
+            case 'medium': return '#FF9800';
+            case 'high': return '#F44336';
+            default: return '#666';
+        }
     };
 
     const [adminModalVisible, setAdminModalVisible] = useState(false);
@@ -251,15 +355,135 @@ export default function ProjectHomeScreen() {
                 );
             case 'tasks':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Tasks</Text>
-                        <Text style={styles.contentSubtitle}>Manage project tasks</Text>
+                    <View style={styles.tasksContainer}>
+                        <ScrollView style={styles.tasksScrollView} contentContainerStyle={styles.tasksContent}>
+                            <TouchableOpacity
+                                style={styles.tasksDropdown}
+                                onPress={() => setTasksDropdownOpen(!tasksDropdownOpen)}
+                            >
+                                <View style={styles.tasksDropdownLeft}>
+                                    <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={20} color="#9aa0a6" />
+                                    <Text style={styles.tasksDropdownText}>PRIORITY</Text>
+                                </View>
+                                <View style={styles.tasksDropdownRight}>
+                                    <Text style={styles.tasksCount}>({filteredTasks.length} tasks)</Text>
+                                    <MaterialCommunityIcons
+                                        name={tasksDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                                        size={20}
+                                        color="#9aa0a6"
+                                        style={styles.tasksDropdownChevron}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+
+                            {tasksDropdownOpen && (
+                                <>
+
+                                    <View style={styles.taskFilters}>
+                                        <TouchableOpacity
+                                            style={[styles.filterButton, taskFilter === 'all' && styles.filterButtonActive]}
+                                            onPress={() => setTaskFilter('all')}
+                                        >
+                                            <Text style={[styles.filterButtonText, taskFilter === 'all' && styles.filterButtonTextActive]}>
+                                                All ({tasks.length})
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.filterButton, taskFilter === 'pending' && styles.filterButtonActive]}
+                                            onPress={() => setTaskFilter('pending')}
+                                        >
+                                            <Text style={[styles.filterButtonText, taskFilter === 'pending' && styles.filterButtonTextActive]}>
+                                                Pending ({tasks.filter(t => !t.completed).length})
+                                            </Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.filterButton, taskFilter === 'completed' && styles.filterButtonActive]}
+                                            onPress={() => setTaskFilter('completed')}
+                                        >
+                                            <Text style={[styles.filterButtonText, taskFilter === 'completed' && styles.filterButtonTextActive]}>
+                                                Completed ({tasks.filter(t => t.completed).length})
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    <View style={styles.tasksList}>
+                                        {filteredTasks.length === 0 ? (
+                                            <View style={styles.emptyTasks}>
+                                                <MaterialCommunityIcons name="checkbox-marked-circle-outline" size={60} color="#ccc" />
+                                                <Text style={styles.emptyTasksText}>
+                                                    {taskFilter === 'all' ? 'No tasks yet' :
+                                                        taskFilter === 'pending' ? 'No pending tasks' : 'No completed tasks'}
+                                                </Text>
+                                                <Text style={styles.emptyTasksSubtext}>Tap &quot;Add Task&quot; to create your first task</Text>
+                                            </View>
+                                        ) : (
+                                            filteredTasks.map((task) => (
+                                                <View key={task.id} style={styles.taskItem}>
+                                                    <TouchableOpacity
+                                                        style={styles.taskCheckbox}
+                                                        onPress={() => toggleTaskCompletion(task.id)}
+                                                    >
+                                                        <MaterialCommunityIcons
+                                                            name={task.completed ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                                                            size={24}
+                                                            color={task.completed ? '#8B0000' : '#ccc'}
+                                                        />
+                                                    </TouchableOpacity>
+
+                                                    <View style={styles.taskContent}>
+                                                        <Text style={[styles.taskTitle, task.completed && styles.taskTitleCompleted]}>
+                                                            {task.title}
+                                                        </Text>
+                                                        {task.description && (
+                                                            <Text style={styles.taskDescription}>{task.description}</Text>
+                                                        )}
+                                                        <View style={styles.taskMeta}>
+                                                            {task.dueDate && (
+                                                                <View style={styles.taskMetaItem}>
+                                                                    <MaterialCommunityIcons name="calendar" size={14} color="#666" />
+                                                                    <Text style={styles.taskMetaText}>{task.dueDate}</Text>
+                                                                </View>
+                                                            )}
+                                                            {task.assignee && (
+                                                                <View style={styles.taskMetaItem}>
+                                                                    <MaterialCommunityIcons name="account" size={14} color="#666" />
+                                                                    <Text style={styles.taskMetaText}>{task.assignee}</Text>
+                                                                </View>
+                                                            )}
+                                                            <View style={styles.taskMetaItem}>
+                                                                <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(task.priority) }]} />
+                                                                <Text style={styles.taskMetaText}>{task.priority}</Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
+
+                                                    <TouchableOpacity
+                                                        style={styles.taskDeleteButton}
+                                                        onPress={() => deleteTask(task.id)}
+                                                    >
+                                                        <MaterialCommunityIcons name="delete" size={20} color="#ff4444" />
+                                                    </TouchableOpacity>
+                                                </View>
+                                            ))
+                                        )}
+                                    </View>
+                                </>
+                            )}
+                        </ScrollView>
+
+                        {!tasksDropdownOpen && !addTaskModalVisible && (
+                            <TouchableOpacity
+                                style={styles.addTaskFAB}
+                                onPress={() => setAddTaskModalVisible(true)}
+                            >
+                                <MaterialCommunityIcons name="plus" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        )}
                     </View>
                 );
             case 'photos':
                 return (
-                    <View style={[styles.contentSection, {paddingTop: 50, justifyContent: 'flex-start'}]}>
+                    <View style={[styles.contentSection, { paddingTop: 50, justifyContent: 'flex-start' }]}>
                         <MaterialCommunityIcons name="image-multiple-outline" size={60} color="#8B0000" />
                         <Text style={styles.contentTitle}>Add photos, videos and 360° photos</Text>
                         <Text style={styles.contentSubtitle}>All photos stay organized here to help you and your team monitor progress on your project.</Text>
@@ -267,8 +491,8 @@ export default function ProjectHomeScreen() {
                 );
             case 'forms':
                 return (
-                    <View style={[styles.contentSection, {paddingTop: 100, justifyContent: 'flex-start'}]}>
-                        <View style={{borderWidth: 2, borderColor: '#8B0000', borderRadius: 3, padding: 20, alignItems: 'center'}}>
+                    <View style={[styles.contentSection, { paddingTop: 100, justifyContent: 'flex-start' }]}>
+                        <View style={{ borderWidth: 2, borderColor: '#8B0000', borderRadius: 3, padding: 20, alignItems: 'center' }}>
                             <Text style={styles.formsModalTitle}>Upgrade to Business to access custom forms</Text>
                             <Text style={styles.formsModalSubtitle}>Standardize your jobsite processes with paperless forms and templates.</Text>
                             <MaterialCommunityIcons name="form-select" size={60} color="#8B0000" style={styles.formsModalIcon} />
@@ -335,8 +559,8 @@ export default function ProjectHomeScreen() {
                                                     {person.email && <Text style={styles.personDetail}>{person.email}</Text>}
                                                     {person.phone && <Text style={styles.personDetail}>{person.phone}</Text>}
                                                 </View>
-                                                <TouchableOpacity 
-                                                    style={styles.removeButton} 
+                                                <TouchableOpacity
+                                                    style={styles.removeButton}
                                                     onPress={() => removePerson(person.id)}
                                                 >
                                                     <MaterialIcons name="close" size={20} color="#ff4444" />
@@ -354,7 +578,7 @@ export default function ProjectHomeScreen() {
                 );
             case 'settings':
                 return (
-                    <ScrollView style={styles.settingsContainer} contentContainerStyle={styles.settingsContent}>
+                    <ScrollView style={styles.settingsContainer} contentContainerStyle={[styles.settingsContent, { paddingBottom: insets.bottom + 10 }]}>
 
                         <Text style={styles.cardTitle}>PROJECT INFORMATION</Text>
                         <View style={styles.settingsCard}>
@@ -483,35 +707,41 @@ export default function ProjectHomeScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header with hamburger menu */}
             <View style={styles.header}>
-                {(activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) ? (
+                {(activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) || (activeSection === 'tasks' && tasksSearchOpen) ? (
                     <>
-                        <TouchableOpacity onPress={() => { 
-                            if (activeSection === 'specifications') { 
-                                setSearchOpen(false); 
-                                setQuery(''); 
-                            } else { 
-                                setFilesSearchOpen(false); 
-                                setFilesQuery(''); 
-                            } 
+                        <TouchableOpacity onPress={() => {
+                            if (activeSection === 'specifications') {
+                                setSearchOpen(false);
+                                setQuery('');
+                            } else if (activeSection === 'files') {
+                                setFilesSearchOpen(false);
+                                setFilesQuery('');
+                            } else if (activeSection === 'tasks') {
+                                setTasksSearchOpen(false);
+                                setTasksQuery('');
+                            }
                         }} style={styles.iconBtn}>
                             <MaterialIcons name="arrow-back" size={22} color="#fff" />
                         </TouchableOpacity>
                         <TextInput
                             ref={textInputRef}
                             autoFocus
-                            placeholder={activeSection === 'specifications' ? "Spec section number or name" : "Search files"}
+                            placeholder={activeSection === 'specifications' ? "Spec section number or name" : activeSection === 'files' ? "Search files" : "Task name, @assignee, #tag"}
                             placeholderTextColor="#7a7f83"
-                            value={activeSection === 'specifications' ? query : filesQuery}
-                            onChangeText={activeSection === 'specifications' ? setQuery : setFilesQuery}
+                            value={activeSection === 'specifications' ? query : activeSection === 'files' ? filesQuery : tasksQuery}
+                            onChangeText={activeSection === 'specifications' ? setQuery : activeSection === 'files' ? setFilesQuery : setTasksQuery}
                             style={styles.searchInputInHeader}
                         />
+                        <TouchableOpacity style={styles.qrBtn} onPress={() => { }}>
+                            <MaterialIcons name="qr-code-scanner" size={20} color="#fff" />
+                        </TouchableOpacity>
                     </>
                 ) : (
                     <>
                         <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' || activeSection === 'photos' || activeSection === 'plans' ? 2 : 1}>
+                        <Text style={styles.headerTitle} numberOfLines={activeSection === 'files' || activeSection === 'photos' || activeSection === 'plans' || activeSection === 'tasks' ? 2 : 1}>
                             {activeSection === 'files' ? (
                                 <>
                                     <Text style={styles.headerMainTitle}>Files</Text>
@@ -529,6 +759,12 @@ export default function ProjectHomeScreen() {
                                     <Text style={styles.headerMainTitle}>Plans</Text>
                                     {'\n'}
                                     <Text style={styles.headerSubTitle}>All tasks on plans</Text>
+                                </>
+                            ) : activeSection === 'tasks' ? (
+                                <>
+                                    <Text style={styles.headerMainTitle}>Tasks</Text>
+                                    {'\n'}
+                                    <Text style={styles.headerSubTitle}>All Tasks</Text>
                                 </>
                             ) : (
                                 activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')
@@ -558,9 +794,21 @@ export default function ProjectHomeScreen() {
                                     <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
                                 </TouchableOpacity>
                             ) : activeSection === 'photos' ? (
-                                <TouchableOpacity style={styles.iconBtn} onPress={() => {}}>
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => { }}>
                                     <MaterialCommunityIcons name="fullscreen" size={22} color="#fff" />
                                 </TouchableOpacity>
+                            ) : activeSection === 'tasks' ? (
+                                <>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => setTasksSearchOpen(true)}>
+                                        <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => {/* TODO: Add filters functionality */ }}>
+                                        <MaterialCommunityIcons name="filter-variant" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.iconBtn} onPress={() => {/* TODO: Add upgrade functionality */ }}>
+                                        <MaterialCommunityIcons name="crown" size={22} color="#fff" />
+                                    </TouchableOpacity>
+                                </>
                             ) : (
                                 <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/people')}>
                                     <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
@@ -1029,30 +1277,30 @@ export default function ProjectHomeScreen() {
                 transparent={true}
                 onRequestClose={() => setAccessModalVisible(false)}
             >
-                <TouchableOpacity 
-                    style={styles.accessModalOverlay} 
-                    activeOpacity={1} 
+                <TouchableOpacity
+                    style={styles.accessModalOverlay}
+                    activeOpacity={1}
                     onPress={() => setAccessModalVisible(false)}
                 >
-                    <TouchableOpacity 
-                        style={styles.accessModalContainer} 
+                    <TouchableOpacity
+                        style={styles.accessModalContainer}
                         activeOpacity={1}
-                        onPress={() => {}} // Prevent closing when pressing modal content
+                        onPress={() => { }} // Prevent closing when pressing modal content
                     >
                         <Text style={styles.accessModalTitle}>Select project access</Text>
                         <Text style={styles.accessModalSubtitle}>Learn more about access levels here</Text>
-                        
+
                         <View style={styles.accessOptionsContainer}>
                             <TouchableOpacity style={styles.accessOptionSelected} onPress={() => setAccessModalVisible(false)}>
                                 <Text style={styles.accessOptionTextSelected}>Admin</Text>
                                 <Text style={styles.accessOptionDescription}>See and control everything on project</Text>
                             </TouchableOpacity>
-                            
+
                             <TouchableOpacity style={styles.accessOption} onPress={() => setAccessModalVisible(false)}>
                                 <Text style={styles.accessOptionText}>Member</Text>
-                                <Text style={styles.accessOptionDescription}>See all tasks associated with the project, but can't verify tasks or add plans</Text>
+                                <Text style={styles.accessOptionDescription}>See all tasks associated with the project, but can&apos;t verify tasks or add plans</Text>
                             </TouchableOpacity>
-                            
+
                             <TouchableOpacity style={styles.accessOption} onPress={() => setAccessModalVisible(false)}>
                                 <Text style={styles.accessOptionText}>Follower</Text>
                                 <Text style={styles.accessOptionDescription}>Similar to member, but can only see their own tasks (best for outside companies)</Text>
@@ -1069,9 +1317,9 @@ export default function ProjectHomeScreen() {
                 transparent={true}
                 onRequestClose={() => setPhotosModalVisible(false)}
             >
-                <TouchableOpacity 
-                    style={styles.photosModalOverlay} 
-                    activeOpacity={1} 
+                <TouchableOpacity
+                    style={styles.photosModalOverlay}
+                    activeOpacity={1}
                     onPress={() => setPhotosModalVisible(false)}
                 >
                     <View style={styles.photosModalContainer}>
@@ -1089,6 +1337,94 @@ export default function ProjectHomeScreen() {
                         </TouchableOpacity>
                     </View>
                 </TouchableOpacity>
+            </Modal>
+
+            {/* Add Task Modal */}
+            <Modal
+                visible={addTaskModalVisible}
+                animationType="slide"
+                transparent
+                onRequestClose={() => setAddTaskModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay}>
+                    <View style={styles.addTaskModalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Add New Task</Text>
+                            <TouchableOpacity onPress={() => setAddTaskModalVisible(false)}>
+                                <MaterialCommunityIcons name="close" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.addTaskModalBody}>
+                            <Text style={styles.inputLabel}>Task Title *</Text>
+                            <TextInput
+                                style={styles.taskInput}
+                                placeholder="Enter task title"
+                                placeholderTextColor="#7a7f83"
+                                value={newTaskTitle}
+                                onChangeText={setNewTaskTitle}
+                                maxLength={100}
+                            />
+
+                            <Text style={styles.inputLabel}>Description</Text>
+                            <TextInput
+                                style={[styles.taskInput, styles.taskDescriptionInput]}
+                                placeholder="Enter task description (optional)"
+                                placeholderTextColor="#7a7f83"
+                                value={newTaskDescription}
+                                onChangeText={setNewTaskDescription}
+                                multiline
+                                numberOfLines={3}
+                                maxLength={500}
+                            />
+
+                            <Text style={styles.inputLabel}>Due Date</Text>
+                            <TextInput
+                                style={styles.taskInput}
+                                placeholder="YYYY-MM-DD (optional)"
+                                placeholderTextColor="#7a7f83"
+                                value={newTaskDueDate}
+                                onChangeText={setNewTaskDueDate}
+                            />
+
+                            <Text style={styles.inputLabel}>Priority</Text>
+                            <View style={styles.priorityButtons}>
+                                {(['low', 'medium', 'high'] as const).map((priority) => (
+                                    <TouchableOpacity
+                                        key={priority}
+                                        style={[
+                                            styles.priorityButton,
+                                            newTaskPriority === priority && styles.priorityButtonActive
+                                        ]}
+                                        onPress={() => setNewTaskPriority(priority)}
+                                    >
+                                        <Text style={[
+                                            styles.priorityButtonText,
+                                            newTaskPriority === priority && styles.priorityButtonTextActive
+                                        ]}>
+                                            {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+
+                            <View style={styles.addTaskModalButtons}>
+                                <TouchableOpacity
+                                    style={styles.taskCancelButton}
+                                    onPress={() => setAddTaskModalVisible(false)}
+                                >
+                                    <Text style={styles.taskCancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.addButton, !newTaskTitle.trim() && styles.addButtonDisabled]}
+                                    onPress={addTask}
+                                    disabled={!newTaskTitle.trim()}
+                                >
+                                    <Text style={styles.addButtonText}>Add Task</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </Pressable>
             </Modal>
 
         </SafeAreaView>
@@ -1175,6 +1511,36 @@ const styles = StyleSheet.create({
         marginRight: 4,
     },
     plansDropdownChevron: {
+        marginLeft: 2,
+    },
+    tasksDropdown: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    tasksDropdownLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    tasksDropdownRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    tasksDropdownText: {
+        color: '#cccccc',
+        fontSize: 15,
+        fontWeight: '600',
+        marginLeft: 10,
+        marginRight: 6,
+    },
+    tasksCount: {
+        color: '#9aa0a6',
+        fontSize: 14,
+        marginRight: 4,
+    },
+    tasksDropdownChevron: {
         marginLeft: 2,
     },
     searchContainer: {
@@ -2148,5 +2514,256 @@ const styles = StyleSheet.create({
         flex: 1,
         marginLeft: 8,
         alignItems: 'center',
+    },
+    // Tasks styles
+    tasksContainer: {
+        flex: 1,
+        position: 'relative',
+    },
+    tasksScrollView: {
+        flex: 1,
+    },
+    tasksContent: {
+        padding: 16,
+    },
+    tasksHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    tasksTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    addTaskButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#8B0000',
+    },
+    addTaskButtonText: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+    taskFilters: {
+        flexDirection: 'row',
+        marginBottom: 20,
+    },
+    filterButton: {
+        flex: 1,
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        marginHorizontal: 4,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#333',
+        alignItems: 'center',
+    },
+    filterButtonActive: {
+        backgroundColor: 'transparent',
+        borderColor: '#8B0000',
+    },
+    filterButtonText: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        fontWeight: '500',
+    },
+    filterButtonTextActive: {
+        color: '#8B0000',
+    },
+    tasksList: {
+        flex: 1,
+    },
+    taskItem: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        backgroundColor: '#1f1f1f',
+        padding: 16,
+        marginBottom: 12,
+        borderRadius: 8,
+    },
+    taskCheckbox: {
+        marginRight: 12,
+        marginTop: 2,
+    },
+    taskContent: {
+        flex: 1,
+    },
+    taskTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    taskTitleCompleted: {
+        textDecorationLine: 'line-through',
+        color: '#666',
+    },
+    taskDescription: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginBottom: 8,
+    },
+    taskMeta: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    taskMetaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 16,
+        marginBottom: 4,
+    },
+    taskMetaText: {
+        fontSize: 12,
+        color: '#9aa0a6',
+        marginLeft: 4,
+    },
+    priorityIndicator: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    taskDeleteButton: {
+        padding: 4,
+        marginTop: 2,
+    },
+    emptyTasks: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    emptyTasksText: {
+        fontSize: 18,
+        color: '#666',
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    emptyTasksSubtext: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        textAlign: 'center',
+    },
+    addTaskFAB: {
+        position: 'absolute',
+        bottom: 76,
+        right: 30,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#8B0000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    addTaskModalContent: {
+        backgroundColor: '#1f1f1f',
+        margin: 20,
+        marginHorizontal: 5,
+        width: '95%',
+        borderRadius: 3,
+        maxHeight: '80%',
+    },
+    addTaskModalBody: {
+        padding: 20,
+        paddingTop: 10,
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#ffffff',
+        marginBottom: 8,
+        marginTop: 0,
+    },
+    taskInput: {
+        backgroundColor: '#2a2a2a',
+        borderRadius: 6,
+        padding: 12,
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    taskDescriptionInput: {
+        height: 80,
+        textAlignVertical: 'top',
+    },
+    priorityButtons: {
+        flexDirection: 'row',
+        marginTop: 8,
+    },
+    priorityButton: {
+        flex: 1,
+        paddingVertical: 6,
+        marginHorizontal: 4,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#333',
+        alignItems: 'center',
+    },
+    priorityButtonActive: {
+        backgroundColor: 'transparent',
+        borderColor: '#8B0000',
+    },
+    priorityButtonText: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        fontWeight: '500',
+    },
+    priorityButtonTextActive: {
+        color: '#8B0000',
+    },
+    addTaskModalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
+    taskCancelButton: {
+        flex: 1,
+        paddingVertical: 10,
+        marginRight: 8,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#333',
+        alignItems: 'center',
+    },
+    taskCancelButtonText: {
+        fontSize: 16,
+        color: '#8B0000',
+        fontWeight: '500',
+    },
+    addButton: {
+        flex: 1,
+        paddingVertical: 10,
+        marginLeft: 8,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#8B0000',
+        alignItems: 'center',
+    },
+    addButtonDisabled: {
+        borderColor: '#333',
+    },
+    addButtonText: {
+        fontSize: 16,
+        color: '#9aa0a6',
+        fontWeight: '600',
+    },
+    qrBtn: {
+        marginLeft: 8,
+        padding: 6,
     },
 });
