@@ -42,6 +42,13 @@ type Plan = {
     image: any;
 };
 
+type Person = {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+};
+
 const SAMPLE_PLANS: Plan[] = [
     { id: '1', name: 'Floor Plan - Level 1', image: require('../../assets/images/plan-1.jpg') },
     { id: '2', name: 'Floor Plan - Level 2', image: require('../../assets/images/plan-2.jpg') },
@@ -53,11 +60,11 @@ const RECENTLY_VIEWED_PLANS: Plan[] = [
 ];
 
 export default function ProjectHomeScreen() {
-    const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+    const { name } = useLocalSearchParams<{ id: string; name: string }>();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [activeSection, setActiveSection] = useState('plans');
-    const [plansDropdownOpen, setPlansDropdownOpen] = useState(false);
+    const [plansDropdownOpen, setPlansDropdownOpen] = useState(true);
     const [plans] = useState(SAMPLE_PLANS);
     const [viewMode, setViewMode] = useState<'thumbnail' | 'list'>('thumbnail');
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -86,7 +93,7 @@ export default function ProjectHomeScreen() {
     const [sendEmailChecked, setSendEmailChecked] = useState(false);
     const [requireCostChecked, setRequireCostChecked] = useState(false);
 
-    const [lastSync, setLastSync] = useState('Never');
+    const [lastSync] = useState('Never');
 
     const [manpowerUnitModalVisible, setManpowerUnitModalVisible] = useState(false);
     const [manpowerUnit, setManpowerUnit] = useState('man-hours');
@@ -109,6 +116,15 @@ export default function ProjectHomeScreen() {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editingField, setEditingField] = useState<'projectName' | 'projectCode' | 'address'>('projectName');
     const [editingValue, setEditingValue] = useState('');
+
+    const [people, setPeople] = useState<Person[]>([]);
+
+    const removePerson = (personId: string) => {
+        setPeople(prev => prev.filter(person => person.id !== personId));
+    };
+
+    const [adminModalVisible, setAdminModalVisible] = useState(false);
+    const [accessModalVisible, setAccessModalVisible] = useState(false);
 
     useEffect(() => {
         if (activeSection === 'specifications' && searchOpen) {
@@ -248,10 +264,61 @@ export default function ProjectHomeScreen() {
                 );
             case 'people':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="account-group-outline" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>People</Text>
-                        <Text style={styles.contentSubtitle}>Project team members</Text>
+                    <View style={styles.peopleContainer}>
+                        <ScrollView style={styles.peopleScrollView} contentContainerStyle={styles.peopleContent}>
+                            <View style={styles.adminHeader}>
+                                <Text style={styles.adminTitle}>ADMIN</Text>
+                                <Text style={styles.accountCount}>({people.length + 1})</Text>
+                            </View>
+                            <TouchableOpacity style={styles.adminContainer} onPress={() => setAdminModalVisible(true)}>
+                                <View style={styles.adminInfo}>
+                                    <View style={styles.adminUserRow}>
+                                        <View style={styles.adminAvatar}>
+                                            <MaterialCommunityIcons name="account-circle" size={50} color="#8B0000" />
+                                            <View style={styles.adminBadge}>
+                                                <MaterialCommunityIcons name="crown" size={16} color="#FFD700" />
+                                            </View>
+                                        </View>
+                                        <View style={styles.adminTextContainer}>
+                                            <Text style={styles.adminName}>John Doe</Text>
+                                            <Text style={styles.adminCompany}>WickedUI</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                            {people.length === 0 ? (
+                                <View style={styles.emptyState}>
+                                    <MaterialCommunityIcons name="account-group-outline" size={60} color="#8B0000" />
+                                    <Text style={styles.contentTitle}>Invite your team</Text>
+                                    <Text style={styles.contentSubtitle}>Organize your project team and manage permission levels</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    <Text style={styles.sectionTitle}>Team Members</Text>
+                                    <View style={styles.peopleList}>
+                                        {people.map((person) => (
+                                            <View key={person.id} style={styles.personItem}>
+                                                <MaterialCommunityIcons name="account-circle" size={40} color="#8B0000" />
+                                                <View style={styles.personInfo}>
+                                                    <Text style={styles.personName}>{person.name}</Text>
+                                                    {person.email && <Text style={styles.personDetail}>{person.email}</Text>}
+                                                    {person.phone && <Text style={styles.personDetail}>{person.phone}</Text>}
+                                                </View>
+                                                <TouchableOpacity 
+                                                    style={styles.removeButton} 
+                                                    onPress={() => removePerson(person.id)}
+                                                >
+                                                    <MaterialIcons name="close" size={20} color="#ff4444" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        ))}
+                                    </View>
+                                </>
+                            )}
+                        </ScrollView>
+                        <TouchableOpacity style={styles.fab} activeOpacity={0.9} onPress={() => router.push('/people')}>
+                            <MaterialIcons name="add" size={28} color="#fff" />
+                        </TouchableOpacity>
                     </View>
                 );
             case 'settings':
@@ -406,7 +473,7 @@ export default function ProjectHomeScreen() {
                             <MaterialCommunityIcons name="menu" size={24} color="#fff" />
                         </TouchableOpacity>
                         <Text style={styles.headerTitle} numberOfLines={1}>
-                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : (name || 'Project')}
+                            {activeSection === 'specifications' ? 'Specifications' : activeSection === 'settings' ? 'Project settings' : activeSection === 'people' ? 'People' : (name || 'Project')}
                         </Text>
                         <View style={styles.headerRight}>
                             {activeSection === 'specifications' ? (
@@ -428,14 +495,9 @@ export default function ProjectHomeScreen() {
                             ) : activeSection === 'settings' ? (
                                 <View />
                             ) : (
-                                <>
-                                    <TouchableOpacity style={styles.iconBtn}>
-                                        <MaterialCommunityIcons name="bell-outline" size={22} color="#fff" />
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={styles.iconBtn}>
-                                        <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
-                                    </TouchableOpacity>
-                                </>
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/people')}>
+                                    <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
+                                </TouchableOpacity>
                             )}
                         </View>
                     </>
@@ -802,6 +864,102 @@ export default function ProjectHomeScreen() {
                     </View>
                 </Pressable>
             </Modal>
+
+            {/* Admin Modal */}
+            <Modal
+                visible={adminModalVisible}
+                animationType="slide"
+                onRequestClose={() => setAdminModalVisible(false)}
+            >
+                <View style={styles.adminModalContainer}>
+                    <View style={styles.adminModalHeader}>
+                        <TouchableOpacity onPress={() => setAdminModalVisible(false)} style={styles.backButton}>
+                            <MaterialIcons name="arrow-back" size={24} color="#ffffff" />
+                        </TouchableOpacity>
+                        <Text style={styles.adminModalHeaderTitle}>Administrator</Text>
+                        <View style={{ width: 40 }} />
+                    </View>
+                    <ScrollView style={styles.adminModalContent} contentContainerStyle={styles.adminModalContentContainer}>
+                        <View style={styles.adminModalProfile}>
+                            <View style={styles.adminModalAvatar}>
+                                <MaterialCommunityIcons name="account-circle" size={120} color="#8B0000" />
+                                <View style={styles.adminModalBadge}>
+                                    <MaterialCommunityIcons name="crown" size={24} color="#FFD700" />
+                                </View>
+                            </View>
+                            <Text style={styles.adminModalName}>John Doe</Text>
+                            <Text style={styles.adminModalCompany}>WickedUI</Text>
+                            <Text style={styles.adminModalRole}>Project Administrator</Text>
+                        </View>
+                        <View style={styles.adminModalSeparator} />
+                        <View style={styles.adminModalDetails}>
+                            <View style={styles.adminModalDetailItem}>
+                                <View style={styles.adminModalIconsContainer}>
+                                    <MaterialIcons name="phone" size={20} color="#8B0000" />
+                                    <MaterialIcons name="sms" size={20} color="#8B0000" style={styles.iconSpacing} />
+                                </View>
+                                <Text style={styles.adminModalDetail}>+1 555-555-5555</Text>
+                            </View>
+                            <View style={styles.adminModalDetailItem}>
+                                <MaterialIcons name="email" size={20} color="#8B0000" />
+                                <Text style={styles.adminModalDetail}>john@example.com</Text>
+                            </View>
+                            <TouchableOpacity style={styles.adminModalDetailItem} onPress={() => setAccessModalVisible(true)}>
+                                <View style={styles.adminModalDetailContent}>
+                                    <Text style={styles.adminModalDetail}>Full Project Access</Text>
+                                    <Text style={styles.adminModalDetailSecondary}>Admin</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                    <View style={styles.adminModalActions}>
+                        <TouchableOpacity style={styles.leaveProjectButton} onPress={() => setAdminModalVisible(false)}>
+                            <Text style={styles.leaveProjectText}>Leave Project</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Access Level Modal */}
+            <Modal
+                visible={accessModalVisible}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={() => setAccessModalVisible(false)}
+            >
+                <TouchableOpacity 
+                    style={styles.accessModalOverlay} 
+                    activeOpacity={1} 
+                    onPress={() => setAccessModalVisible(false)}
+                >
+                    <TouchableOpacity 
+                        style={styles.accessModalContainer} 
+                        activeOpacity={1}
+                        onPress={() => {}} // Prevent closing when pressing modal content
+                    >
+                        <Text style={styles.accessModalTitle}>Select project access</Text>
+                        <Text style={styles.accessModalSubtitle}>Learn more about access levels here</Text>
+                        
+                        <View style={styles.accessOptionsContainer}>
+                            <TouchableOpacity style={styles.accessOptionSelected} onPress={() => setAccessModalVisible(false)}>
+                                <Text style={styles.accessOptionTextSelected}>Admin</Text>
+                                <Text style={styles.accessOptionDescription}>See and control everything on project</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity style={styles.accessOption} onPress={() => setAccessModalVisible(false)}>
+                                <Text style={styles.accessOptionText}>Member</Text>
+                                <Text style={styles.accessOptionDescription}>See all tasks associated with the project, but can't verify tasks or add plans</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity style={styles.accessOption} onPress={() => setAccessModalVisible(false)}>
+                                <Text style={styles.accessOptionText}>Follower</Text>
+                                <Text style={styles.accessOptionDescription}>Similar to member, but can only see their own tasks (best for outside companies)</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            </Modal>
+
         </SafeAreaView>
     );
 }
@@ -1297,5 +1455,455 @@ const styles = StyleSheet.create({
     },
     selectedModalOptionText: {
         color: '#8B0000',
+    },
+    peopleContainer: {
+        flex: 1,
+    },
+    peopleScrollView: {
+        flex: 1,
+    },
+    peopleContent: {
+        padding: 20,
+    },
+    inviteButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 20,
+    },
+    inviteButton: {
+        backgroundColor: '#8B0000',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        flex: 0.45,
+        justifyContent: 'center',
+    },
+    inviteButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 10,
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+    },
+    peopleList: {
+        marginTop: 10,
+    },
+    personItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        padding: 15,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    removeButton: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        padding: 4,
+        backgroundColor: 'rgba(255, 68, 68, 0.1)',
+        borderRadius: 12,
+    },
+    personInfo: {
+        marginLeft: 15,
+        flex: 1,
+    },
+    personName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    personDetail: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginTop: 2,
+    },
+    contactsModalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '90%',
+        maxHeight: '70%',
+    },
+    contactsList: {
+        maxHeight: 300,
+        marginBottom: 20,
+    },
+    contactItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    contactName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#ffffff',
+    },
+    contactDetail: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginTop: 2,
+    },
+    fab: {
+        position: 'absolute',
+        right: 30,
+        bottom: 76,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#8B0000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 6,
+    },
+    inviteOptionsModal: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '80%',
+        padding: 20,
+    },
+    inviteOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        backgroundColor: '#1f1f1f',
+        marginBottom: 10,
+    },
+    inviteOptionText: {
+        color: '#ffffff',
+        fontSize: 16,
+        marginLeft: 15,
+    },
+    inviteContainer: {
+        flex: 1,
+        padding: 20,
+        paddingTop: 10,
+    },
+    deviceContactsText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 5,
+        alignSelf: 'flex-start',
+    },
+    connectContactsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+    },
+    connectContactsText: {
+        color: '#8B0000',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 10,
+    },
+    adminContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        paddingVertical: 12,
+        paddingLeft: 24,
+        paddingRight: 8,
+        marginBottom: 16,
+        marginHorizontal: -40,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    adminInfo: {
+        flex: 1,
+    },
+    adminTitle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#9aa0a6',
+        textTransform: 'uppercase',
+        marginBottom: 8,
+    },
+    adminUserRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    adminAvatar: {
+        position: 'relative',
+    },
+    adminBadge: {
+        position: 'absolute',
+        top: -5,
+        right: -5,
+        backgroundColor: '#8B0000',
+        borderRadius: 10,
+        width: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    adminTextContainer: {
+        marginLeft: 16,
+        flex: 1,
+    },
+    adminName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        lineHeight: 20,
+    },
+    adminCompany: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        marginTop: 2,
+        lineHeight: 16,
+    },
+    adminRole: {
+        fontSize: 12,
+        color: '#FFD700',
+        marginTop: 4,
+        fontWeight: '600',
+    },
+    accountCount: {
+        fontSize: 16,
+        color: '#9aa0a6',
+    },
+    adminHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 5,
+        marginHorizontal: -40,
+        paddingHorizontal: 40,
+    },
+    adminModalContainer: {
+        flex: 1,
+        backgroundColor: '#0f1112',
+    },
+    adminModalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#121417',
+        borderBottomWidth: 1,
+        borderBottomColor: '#151515',
+    },
+    backButton: {
+        padding: 4,
+    },
+    adminModalHeaderTitle: {
+        flex: 1,
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: '600',
+        marginLeft: 16,
+    },
+    adminModalContent: {
+        flex: 1,
+    },
+    adminModalContentContainer: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 20,
+    },
+    adminModalProfile: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    adminModalAvatar: {
+        position: 'relative',
+        marginBottom: 16,
+    },
+    adminModalBadge: {
+        position: 'absolute',
+        top: -8,
+        right: -8,
+        backgroundColor: '#8B0000',
+        borderRadius: 16,
+        width: 32,
+        height: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: '#0f1112',
+    },
+    adminModalName: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        marginBottom: 4,
+    },
+    adminModalCompany: {
+        fontSize: 18,
+        color: '#9aa0a6',
+        marginBottom: 8,
+    },
+    adminModalRole: {
+        fontSize: 14,
+        color: '#FFD700',
+        fontWeight: '600',
+        backgroundColor: '#333',
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    adminModalSeparator: {
+        height: 1,
+        backgroundColor: '#333',
+        width: '100%',
+        marginVertical: 20,
+    },
+    adminModalDetails: {
+        width: '100%',
+    },
+    adminModalDetailItem: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        backgroundColor: '#1f1f1f',
+        padding: 16,
+        marginBottom: 8,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    adminModalDetail: {
+        fontSize: 16,
+        color: '#ffffff',
+        marginRight: 12,
+        flex: 1,
+    },
+    adminModalDetailContent: {
+        flex: 1,
+    },
+    adminModalDetailSecondary: {
+        fontSize: 12,
+        color: '#9aa0a6',
+        marginTop: 4,
+    },
+    adminModalIconsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconSpacing: {
+        marginLeft: 12,
+    },
+    adminModalActions: {
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+    },
+    adminModalActionButton: {
+        backgroundColor: '#8B0000',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    adminModalActionText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    leaveProjectButton: {
+        backgroundColor: 'transparent',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ff0000',
+        marginTop: -20,
+    },
+    leaveProjectText: {
+        color: '#ff0000',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    accessModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    accessModalContainer: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 4,
+        padding: 16,
+        margin: 20,
+        width: '90%',
+        maxWidth: 360,
+        alignItems: 'center',
+    },
+    accessModalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#ffffff',
+        textAlign: 'center',
+        marginBottom: 4,
+    },
+    accessModalSubtitle: {
+        fontSize: 14,
+        color: '#9aa0a6',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    accessOptionsContainer: {
+        alignItems: 'flex-start',
+        width: '100%',
+        marginBottom: 8,
+    },
+    accessOption: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginBottom: 8,
+        alignItems: 'flex-start',
+    },
+    accessOptionText: {
+        fontSize: 16,
+        color: '#ffffff',
+        fontWeight: '500',
+    },
+    accessModalCancel: {
+        marginTop: 16,
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    accessModalCancelText: {
+        fontSize: 16,
+        color: '#9aa0a6',
+        fontWeight: '500',
+    },
+    accessOptionSelected: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginBottom: 8,
+        alignItems: 'flex-start',
+    },
+    accessOptionTextSelected: {
+        fontSize: 16,
+        color: '#8B0000',
+        fontWeight: '500',
+    },
+    accessOptionDescription: {
+        fontSize: 12,
+        color: '#9aa0a6',
+        marginTop: 2,
+        fontStyle: 'italic',
     },
 });
