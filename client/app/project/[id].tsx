@@ -267,10 +267,20 @@ export default function ProjectHomeScreen() {
                 );
             case 'forms':
                 return (
-                    <View style={styles.contentSection}>
-                        <MaterialCommunityIcons name="form-select" size={60} color="#8B0000" />
-                        <Text style={styles.contentTitle}>Forms</Text>
-                        <Text style={styles.contentSubtitle}>Project forms and checklists</Text>
+                    <View style={[styles.contentSection, {paddingTop: 100, justifyContent: 'flex-start'}]}>
+                        <View style={{borderWidth: 2, borderColor: '#8B0000', borderRadius: 3, padding: 20, alignItems: 'center'}}>
+                            <Text style={styles.formsModalTitle}>Upgrade to Business to access custom forms</Text>
+                            <Text style={styles.formsModalSubtitle}>Standardize your jobsite processes with paperless forms and templates.</Text>
+                            <MaterialCommunityIcons name="form-select" size={60} color="#8B0000" style={styles.formsModalIcon} />
+                            <View style={styles.formsModalButtons}>
+                                <TouchableOpacity style={styles.requestDemoButton} onPress={() => setActiveSection('plans')}>
+                                    <Text style={styles.buttonText}>REQUEST DEMO</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.noThanksButton} onPress={() => setActiveSection('plans')}>
+                                    <Text style={styles.buttonText}>NO, THANKS</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
                 );
             case 'files':
@@ -631,19 +641,28 @@ export default function ProjectHomeScreen() {
                                         ]}
                                         onPress={() => handleMenuItemPress(item.id)}
                                     >
-                                        <MaterialCommunityIcons
-                                            name={item.icon}
-                                            size={22}
-                                            color={activeSection === item.id ? '#8B0000' : '#9aa0a6'}
-                                        />
-                                        <Text
-                                            style={[
-                                                styles.menuItemText,
-                                                activeSection === item.id && styles.menuItemTextActive,
-                                            ]}
-                                        >
-                                            {item.label}
-                                        </Text>
+                                        <View style={styles.menuItemLeft}>
+                                            <MaterialCommunityIcons
+                                                name={item.icon}
+                                                size={22}
+                                                color={activeSection === item.id ? '#8B0000' : '#9aa0a6'}
+                                            />
+                                            <Text
+                                                style={[
+                                                    styles.menuItemText,
+                                                    activeSection === item.id && styles.menuItemTextActive,
+                                                ]}
+                                            >
+                                                {item.label}
+                                            </Text>
+                                        </View>
+                                        {item.id === 'forms' && (
+                                            <MaterialCommunityIcons
+                                                name="lock"
+                                                size={22}
+                                                color={activeSection === item.id ? '#8B0000' : '#9aa0a6'}
+                                            />
+                                        )}
                                     </TouchableOpacity>
                                 ))}
                             </View>
@@ -1332,6 +1351,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 14,
+        justifyContent: 'space-between',
     },
     menuItemActive: {
         backgroundColor: 'rgba(139, 0, 0, 0.15)',
@@ -1346,6 +1366,10 @@ const styles = StyleSheet.create({
     menuItemTextActive: {
         color: '#ffffff',
         fontWeight: '600',
+    },
+    menuItemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     sidebarFooter: {
         padding: 16,
@@ -1506,7 +1530,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: '#ffffff',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
     },
     redButtonText: {
@@ -2074,5 +2098,55 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#ffffff',
         marginLeft: 15,
+    },
+    formsModalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 8,
+        width: '90%',
+        padding: 24,
+        alignItems: 'center',
+    },
+    formsModalTitle: {
+        color: '#ffffff',
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    formsModalSubtitle: {
+        color: '#9aa0a6',
+        fontSize: 14,
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    formsModalIcon: {
+        marginBottom: 24,
+    },
+    formsModalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    requestDemoButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#8B0000',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+        flex: 1,
+        marginRight: 8,
+        alignItems: 'center',
+    },
+    noThanksButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: '#9aa0a6',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+        flex: 1,
+        marginLeft: 8,
+        alignItems: 'center',
     },
 });
