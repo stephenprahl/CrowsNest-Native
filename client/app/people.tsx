@@ -19,6 +19,8 @@ export default function PeopleScreen() {
     const [people, setPeople] = useState<Person[]>([]);
     const [contacts, setContacts] = useState<Contacts.Contact[]>([]);
     const [contactsModalVisible, setContactsModalVisible] = useState(false);
+    const [profileModalVisible, setProfileModalVisible] = useState(false);
+    const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
 
     const inviteByEmail = () => {
         if (inviteEmail.trim()) {
@@ -119,14 +121,24 @@ export default function PeopleScreen() {
                             <Text style={styles.sectionTitle}>Team Members</Text>
                             <View style={styles.peopleList}>
                                 {people.map((person) => (
-                                    <View key={person.id} style={styles.personItem}>
-                                        <MaterialCommunityIcons name="account-circle" size={40} color="#8B0000" />
-                                        <View style={styles.personInfo}>
-                                            <Text style={styles.personName}>{person.name}</Text>
-                                            {person.email && <Text style={styles.personDetail}>{person.email}</Text>}
-                                            {person.phone && <Text style={styles.personDetail}>{person.phone}</Text>}
+                                    <TouchableOpacity
+                                        key={person.id}
+                                        style={styles.personItemContainer}
+                                        activeOpacity={0.7}
+                                        onPress={() => {
+                                            setSelectedPerson(person);
+                                            setProfileModalVisible(true);
+                                        }}
+                                    >
+                                        <View style={styles.personItem}>
+                                            <MaterialCommunityIcons name="account-circle" size={40} color="#8B0000" />
+                                            <View style={styles.personInfo}>
+                                                <Text style={styles.personName}>{person.name}</Text>
+                                                {person.email && <Text style={styles.personDetail}>{person.email}</Text>}
+                                                {person.phone && <Text style={styles.personDetail}>{person.phone}</Text>}
+                                            </View>
                                         </View>
-                                    </View>
+                                    </TouchableOpacity>
                                 ))}
                             </View>
                         </>
@@ -136,6 +148,47 @@ export default function PeopleScreen() {
                     <MaterialIcons name="add" size={28} color="#fff" />
                 </TouchableOpacity>
             </View>
+
+            {/* Profile Modal */}
+            {profileModalVisible && selectedPerson && (
+                <View style={styles.modalOverlay}>
+                    <View style={styles.profileModalContent}>
+                        <View style={styles.profileHeader}>
+                            <View style={styles.avatarContainer}>
+                                <MaterialCommunityIcons name="account-circle" size={80} color="#8B0000" />
+                            </View>
+                            <Text style={styles.profileName}>{selectedPerson.name}</Text>
+                            <Text style={styles.profileRole}>Team Member</Text>
+                        </View>
+                        <View style={styles.profileDetails}>
+                            {selectedPerson.email && (
+                                <View style={styles.profileDetailRow}>
+                                    <MaterialCommunityIcons name="email-outline" size={24} color="#9aa0a6" />
+                                    <View style={styles.detailTextContainer}>
+                                        <Text style={styles.detailLabel}>Email</Text>
+                                        <Text style={styles.profileDetailText}>{selectedPerson.email}</Text>
+                                    </View>
+                                </View>
+                            )}
+                            {selectedPerson.phone && (
+                                <View style={styles.profileDetailRow}>
+                                    <MaterialCommunityIcons name="phone-outline" size={24} color="#9aa0a6" />
+                                    <View style={styles.detailTextContainer}>
+                                        <Text style={styles.detailLabel}>Phone</Text>
+                                        <Text style={styles.profileDetailText}>{selectedPerson.phone}</Text>
+                                    </View>
+                                </View>
+                            )}
+                        </View>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setProfileModalVisible(false)}
+                        >
+                            <Text style={styles.buttonText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
 
             {/* Contacts Modal */}
             {contactsModalVisible && (
@@ -272,13 +325,22 @@ const styles = StyleSheet.create({
     peopleList: {
         marginTop: 10,
     },
+    personItemContainer: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
     personItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#1f1f1f',
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 10,
+        padding: 16,
     },
     personInfo: {
         marginLeft: 15,
@@ -316,12 +378,159 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    contactsModalContent: {
+    profileModalContent: {
         backgroundColor: '#121417',
-        borderRadius: 8,
-        width: '80%',
-        maxHeight: '60%',
-        padding: 20,
+        borderRadius: 16,
+        width: '85%',
+        padding: 24,
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    profileHeader: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    avatarContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#1f1f1f',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 2,
+        borderColor: '#8B0000',
+    },
+    profileName: {
+        color: '#ffffff',
+        fontSize: 28,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    profileRole: {
+        color: '#9aa0a6',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    profileDetails: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    profileDetailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        backgroundColor: '#1f1f1f',
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    detailTextContainer: {
+        marginLeft: 16,
+        flex: 1,
+    },
+    detailLabel: {
+        color: '#9aa0a6',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    profileDetailText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    closeButton: {
+        backgroundColor: '#8B0000',
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 10,
+        alignItems: 'center',
+        width: '100%',
+    },
+    profileModalContent: {
+        backgroundColor: '#121417',
+        borderRadius: 16,
+        width: '85%',
+        padding: 24,
+        alignItems: 'center',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    profileHeader: {
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    avatarContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#1f1f1f',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 2,
+        borderColor: '#8B0000',
+    },
+    profileName: {
+        color: '#ffffff',
+        fontSize: 28,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    profileRole: {
+        color: '#9aa0a6',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    profileDetails: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    profileDetailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        backgroundColor: '#1f1f1f',
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    detailTextContainer: {
+        marginLeft: 16,
+        flex: 1,
+    },
+    detailLabel: {
+        color: '#9aa0a6',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    profileDetailText: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    closeButton: {
+        backgroundColor: '#8B0000',
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 10,
+        alignItems: 'center',
+        width: '100%',
     },
     modalTitle: {
         color: '#ffffff',
