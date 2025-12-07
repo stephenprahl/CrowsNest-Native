@@ -26,6 +26,8 @@ const planImages = {
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [menuModalVisible, setMenuModalVisible] = useState(false);
+    const [leftDropdownVisible, setLeftDropdownVisible] = useState(false);
+    const [rightCollapsed, setRightCollapsed] = useState(true);
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -81,6 +83,82 @@ const planImages = {
                     contentFit="contain"
                 />
             </ScrollView>
+
+            {/* Bottom Dropdowns */}
+            <View style={styles.bottomContainer}>
+                <View style={[styles.dropdownContainer, leftDropdownVisible && styles.dropdownContainerOpen]}>
+                    {!leftDropdownVisible && (
+                        <TouchableOpacity style={[styles.leftDropdown, styles.leftDropdownClosed]} onPress={() => setLeftDropdownVisible(!leftDropdownVisible)}>
+                            <Text style={[styles.dropdownText, {fontSize: 13}]}>12-07-2023</Text>
+                            <Text style={[styles.dropdownText, {marginHorizontal: 2, fontSize: 18, color: '#666'}]}>│</Text>
+                            <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    )}
+                    {leftDropdownVisible && (
+                        <View style={styles.dropdownItems}>
+                            <TouchableOpacity style={[styles.dropdownItem, styles.selectedItem]}>
+                                <Text style={styles.dropdownItemText}>12-07-2023</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.dropdownItem, styles.dropdownItemRow, styles.compareItem]}>
+                                <Text style={[styles.dropdownItemText, {marginRight: 8}]}>Compare</Text>
+                                <MaterialCommunityIcons name="compare" size={20} color="#666" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setLeftDropdownVisible(false)}>
+                                <Text style={[styles.dropdownText, {fontSize: 13}]}>12-07-2023</Text>
+                                <Text style={[styles.dropdownText, {marginHorizontal: 2, fontSize: 18, color: '#666'}]}>│</Text>
+                                <MaterialCommunityIcons name="chevron-up" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+                <View style={styles.rightBar}>
+                    {rightCollapsed && (
+                        <TouchableOpacity style={[styles.iconButton, styles.iconButtonTransparent]} onPress={() => setRightCollapsed(false)}>
+                            <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    )}
+                    {!rightCollapsed && (
+                        <View style={styles.rightDropdownMenu}>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="map-marker" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="link" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="pencil" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="square" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="toolbox" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="format-font-size-increase" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="ruler" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <View style={styles.colorCircleIcon} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="compass" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="undo" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <MaterialCommunityIcons name="delete" size={24} color="#8B0000" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setRightCollapsed(true)}>
+                                <MaterialCommunityIcons name="chevron-up" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            </View>
 
             {/* Filters Modal */}
             <Modal
@@ -175,7 +253,7 @@ const planImages = {
                             <Text style={styles.labelText}>QR code</Text>
                         </View>
                         <View style={styles.menuBorder} />
-                        <View style={styles.bottomContainer}>
+                        <View style={styles.menuBottomContainer}>
                             <View style={styles.menuColumn}>
                                 <TouchableOpacity style={styles.menuColumnItem}>
                                     <Text style={styles.menuColumnItemText}>Plan details</Text>
@@ -383,5 +461,124 @@ const styles = StyleSheet.create({
     deleteItemText: {
         color: '#8B0000',
         fontSize: 16,
+    },
+    menuBottomContainer: {
+        backgroundColor: '#1f1f1f',
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    bottomContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        paddingHorizontal: 8,
+        paddingBottom: 16,
+    },
+    leftSection: {
+        position: 'relative',
+    },
+    dropdownContainer: {
+        position: 'relative',
+        borderRadius: 8,
+    },
+    dropdownContainerOpen: {
+        backgroundColor: 'rgba(18, 20, 23, 0.95)',
+    },
+    dropdownItems: {
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+    },
+    closeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    leftDropdown: {
+        backgroundColor: 'transparent',
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    leftDropdownClosed: {
+        backgroundColor: 'transparent',
+    },
+    dropdownText: {
+        color: '#fff',
+        fontSize: 16,
+        marginRight: 8,
+    },
+    leftDropdownMenu: {
+        position: 'absolute',
+        bottom: 50,
+        left: 0,
+        backgroundColor: 'rgba(18, 20, 23, 0.95)',
+        borderRadius: 8,
+        padding: 8,
+        minWidth: 150,
+    },
+    dropdownItem: {
+        paddingVertical: 8,
+        paddingHorizontal: 8,
+    },
+    dropdownItemRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    selectedItem: {
+        backgroundColor: 'rgba(139, 0, 0, 0.3)',
+        marginHorizontal: -8,
+        marginTop: -8,
+        paddingHorizontal: 8,
+        paddingTop: 8,
+        borderTopLeftRadius: 2,
+        borderTopRightRadius: 2,
+    },
+    compareItem: {
+        paddingLeft: 0,
+    },
+    dropdownItemText: {
+        color: '#fff',
+        fontSize: 13,
+    },
+    rightBar: {
+        flexDirection: 'column',
+        gap: 8,
+    },
+    iconButton: {
+        height: 32,
+        backgroundColor: 'transparent',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#000',
+        paddingHorizontal: 4,
+        paddingVertical: 4,
+    },
+    iconButtonTransparent: {
+        backgroundColor: 'transparent',
+    },
+    rightDropdownMenu: {
+        backgroundColor: 'rgba(18, 20, 23, 0.8)',
+        borderRadius: 8,
+        padding: 0,
+        flexDirection: 'column',
+        gap: 8,
+        alignItems: 'center',
+    },
+    colorCircleIcon: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#8B0000',
+        borderWidth: 2,
+        borderColor: '#ffffff',
     },
 });
