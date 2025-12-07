@@ -833,14 +833,14 @@ export default function ProjectHomeScreen() {
                                 type: '*/*',
                                 copyToCacheDirectory: true,
                             });
-                            if (result.type === 'success') {
-                                alert(`File selected: ${result.name}`);
+                            if (!result.canceled) {
+                                alert(`File selected: ${result.assets[0].name}`);
                                 // Here you can handle the file upload to your server or Filestack
                             } else {
                                 alert('File selection cancelled');
                             }
                         } catch (error) {
-                            alert(`Error picking file: ${error.message}`);
+                            alert(`Error picking file: ${error instanceof Error ? error.message : String(error)}`);
                         }
                     } else if (activeSection === 'photos') {
                         setPhotosModalVisible(true);
