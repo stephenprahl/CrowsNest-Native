@@ -1,23 +1,54 @@
 # CrowsNest Native
 
-A mobile project management application built with Expo React Native and TypeScript. CrowsNest allows users to manage construction and renovation projects with features like project creation, search, QR code scanning, and more.
+A comprehensive mobile project management application designed specifically for construction and renovation professionals. Built with Expo React Native and TypeScript, CrowsNest streamlines project workflows from initial planning to completion, enabling teams to collaborate efficiently on-site and remotely.
 
 **Built by P&R Tech**
 
 ## Features
 
-- **Project Management**: Create, view, and delete projects with details like name, address, and last updated time
-- **Search Functionality**: Integrated search that replaces the navbar for focused project discovery
-- **QR Code Scanning**: Scan QR codes for quick project access or data entry
-- **User Profile**: Manage user settings and account information
-- **Notifications**: Stay updated with project notifications
-- **Support**: Access help and support resources
-- **Modern UI**: Clean, dark-themed interface optimized for mobile devices
+### Core Project Management
+- **Project Creation & Management**: Create, view, edit, and delete construction/renovation projects with detailed information including name, address, and last updated timestamps
+- **Advanced Search**: Integrated search functionality that replaces the navigation bar for focused project discovery
+- **QR Code & Barcode Scanning**: Scan QR codes and barcodes for quick project access, data entry, or linking to physical documents
+
+### Team Collaboration
+- **People Management**: Invite team members by email or import from device contacts
+- **Project Teams**: Assign and manage people specific to each project
+- **Notifications**: Stay updated with project notifications and alerts
+
+### Project Details & Documentation
+- **Floor Plans**: Interactive floor plan viewer with zoom, search, and filtering capabilities
+- **Specifications**: Manage project specifications and requirements
+- **Task Management**: Create and track project tasks and milestones
+- **Photo Management**: Upload and organize project photos
+- **Forms**: Digital forms for inspections, checklists, and documentation
+- **File Storage**: Secure storage and organization of project documents and files
+
+### User Experience
+- **User Profile**: Manage account settings and personal information
+- **Support**: Access help resources and contact support
+- **Data Management**: Monitor and manage app cache and storage preferences
+- **Modern UI**: Clean, dark-themed interface optimized for mobile devices with haptic feedback and smooth animations
+
+### Technical Features
+- **Offline Capability**: Core functionality works offline with data synchronization
+- **Cross-Platform**: Native performance on iOS and Android devices
+- **Expo Integration**: Leverages Expo SDK for enhanced native capabilities
 
 ## Project Structure
 
 - `client/`: Expo React Native app using `expo-router` for navigation
-  - `app/`: File-based routing screens (index, profile, notifications, support, refresh)
+  - `app/`: File-based routing screens
+    - `index.tsx`: Home screen with project list, search, and creation
+    - `profile.tsx`: User account management
+    - `notifications.tsx`: Project updates and alerts
+    - `support.tsx`: Help and contact information
+    - `people.tsx`: Team member management and invitations
+    - `data.tsx`: Cache and storage preferences
+    - `project/`: Project-specific screens
+      - `[id].tsx`: Detailed project view with sidebar navigation
+      - `floor-plan/`: Floor plan management
+        - `[id].tsx`: Interactive floor plan viewer
   - `assets/`: Images and other static assets
 - `server/`: Minimal TypeScript server (example setup with Bun)
 - `README.md`: This file
@@ -58,11 +89,21 @@ A mobile project management application built with Expo React Native and TypeScr
 
 ## App Navigation
 
-- **Home**: Project list with search and create functionality
+- **Home**: Project list with search, create, and delete functionality
+- **People**: Team member management and invitations via email or contacts
 - **Profile**: User account management
 - **Notifications**: Project updates and alerts
 - **Support**: Help and contact information
-- **Refresh**: Data synchronization
+- **Data**: Cache and storage preferences
+- **Project Details**: Comprehensive project view with sections for:
+  - Plans (including floor plans)
+  - Specifications
+  - Tasks
+  - Photos
+  - Forms
+  - Files
+  - People
+  - Settings
 
 ## Key Interactions
 
