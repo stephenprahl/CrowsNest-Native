@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-end',
         paddingHorizontal: 8,
-        paddingBottom: 16,
+        paddingBottom: 40,
     },
     leftSection: {
         position: 'relative',
