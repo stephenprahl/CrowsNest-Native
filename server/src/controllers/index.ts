@@ -1,5 +1,6 @@
 import { Context } from 'hono';
 import { floorPlanService } from '../services/floorPlanService';
+import { geminiService } from '../services/geminiService';
 import { notificationService } from '../services/notificationService';
 import { personService } from '../services/personService';
 import { projectService } from '../services/projectService';
@@ -240,3 +241,6 @@ export const notificationController = {
         return c.json({ success: true, message: 'Notification deleted' });
     },
 };
+
+// Gemini Controllers
+export { geminiController } from './geminiController';

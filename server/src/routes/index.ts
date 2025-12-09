@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import floorPlanRouter from './floorPlanRoutes';
+import geminiRouter from './geminiRoutes';
 import notificationRouter from './notificationRoutes';
 import personRouter from './personRoutes';
 import projectRouter from './projectRoutes';
@@ -13,6 +14,7 @@ routes.route('/api', floorPlanRouter);
 routes.route('/api', personRouter);
 routes.route('/api', taskRouter);
 routes.route('/api/notifications', notificationRouter);
+routes.route('/api/gemini', geminiRouter);
 
 // Health check
 routes.get('/api/health', (c) => {

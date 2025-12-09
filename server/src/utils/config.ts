@@ -5,6 +5,9 @@ export const config = {
     database: {
         url: process.env.DATABASE_URL,
     },
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY,
+    },
 };
 
 export const isDevelopment = config.env === 'development';
