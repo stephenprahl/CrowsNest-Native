@@ -162,3 +162,10 @@ export const notificationAPI = {
         return apiCall<void>(`/notifications/${id}`, 'DELETE');
     },
 };
+
+// Gemini API
+export const geminiAPI = {
+    async generate(prompt: string) {
+        return apiCall<{ response: string }>('/gemini/generate', 'POST', { prompt });
+    },
+};

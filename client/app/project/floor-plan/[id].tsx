@@ -1,10 +1,15 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
+    FlatList,
+    KeyboardAvoidingView,
     Modal,
+    PanResponder,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -13,8 +18,16 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { geminiAPI } from '../../../api';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+type Message = {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+};
 
 const planImages = {
     '1': require('../../../assets/images/plan-1.jpg'),
@@ -28,6 +41,123 @@ const planImages = {
     const [menuModalVisible, setMenuModalVisible] = useState(false);
     const [leftDropdownVisible, setLeftDropdownVisible] = useState(false);
     const [rightCollapsed, setRightCollapsed] = useState(true);
+    const [aiModalVisible, setAiModalVisible] = useState(false);
+    const [aiMessages, setAiMessages] = useState<Message[]>([]);
+    const [aiInput, setAiInput] = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+
+    // Zoom state
+    const [zoomScale, setZoomScale] = useState(1);
+    const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+    const [isZooming, setIsZooming] = useState(false);
+    const lastDistance = useRef(0);
+    const lastCenter = useRef({ x: 0, y: 0 });
+    const lastTapTime = useRef(0);
+
+    const sendAiMessage = async () => {
+        if (!aiInput.trim() || aiLoading) return;
+
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: aiInput.trim(),
+        };
+
+        setAiMessages(prev => [...prev, userMessage]);
+        setAiInput('');
+        setAiLoading(true);
+
+        try {
+            const response = await geminiAPI.generate(userMessage.content);
+            if (response.success && response.data) {
+                const assistantMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: response.data.response,
+                };
+                setAiMessages(prev => [...prev, assistantMessage]);
+            } else {
+                throw new Error('Failed to get response');
+            }
+        } catch (error) {
+            const errorMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.',
+            };
+            setAiMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const renderAiMessage = ({ item }: { item: Message }) => (
+        <View style={[styles.aiMessage, item.role === 'user' ? styles.userAiMessage : styles.assistantAiMessage]}>
+            <Text style={styles.aiMessageText}>{item.content}</Text>
+        </View>
+    );
+
+    // Pan responder for zoom functionality
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: () => {
+                setIsZooming(true);
+            },
+            onPanResponderMove: (evt, gestureState) => {
+                if (gestureState.numberActiveTouches === 2) {
+                    // Pinch to zoom
+                    const touches = evt.nativeEvent.touches;
+                    const touch1 = touches[0];
+                    const touch2 = touches[1];
+
+                    const distance = Math.sqrt(
+                        Math.pow(touch2.pageX - touch1.pageX, 2) + Math.pow(touch2.pageY - touch1.pageY, 2)
+                    );
+
+                    const center = {
+                        x: (touch1.pageX + touch2.pageX) / 2,
+                        y: (touch1.pageY + touch2.pageY) / 2,
+                    };
+
+                    if (lastDistance.current > 0) {
+                        const scale = distance / lastDistance.current;
+                        const newScale = Math.max(0.5, Math.min(3, zoomScale * scale));
+                        setZoomScale(newScale);
+
+                        // Adjust pan offset based on center point
+                        const centerOffset = {
+                            x: center.x - SCREEN_WIDTH / 2,
+                            y: center.y - SCREEN_HEIGHT / 2,
+                        };
+                        setPanOffset(centerOffset);
+                    }
+
+                    lastDistance.current = distance;
+                    lastCenter.current = center;
+                } else if (gestureState.numberActiveTouches === 1 && zoomScale > 1) {
+                    // Pan when zoomed in
+                    setPanOffset({
+                        x: panOffset.x + gestureState.dx,
+                        y: panOffset.y + gestureState.dy,
+                    });
+                }
+            },
+            onPanResponderRelease: (evt, gestureState) => {
+                setIsZooming(false);
+                lastDistance.current = 0;
+
+                // Handle double tap to reset zoom
+                const now = Date.now();
+                if (now - lastTapTime.current < 300) {
+                    setZoomScale(1);
+                    setPanOffset({ x: 0, y: 0 });
+                }
+                lastTapTime.current = now;
+            },
+        })
+    );
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -67,6 +197,9 @@ const planImages = {
                             <TouchableOpacity style={styles.iconBtn} onPress={() => setSearchOpen(true)}>
                                 <MaterialCommunityIcons name="magnify" size={22} color="#fff" />
                             </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconBtn} onPress={() => setAiModalVisible(true)}>
+                                <MaterialCommunityIcons name="robot" size={22} color="#fff" />
+                            </TouchableOpacity>
                             <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuModalVisible(true)}>
                                 <MaterialCommunityIcons name="dots-vertical" size={22} color="#fff" />
                             </TouchableOpacity>
@@ -77,11 +210,25 @@ const planImages = {
 
             {/* Floor Plan Image */}
             <ScrollView style={styles.content} contentContainerStyle={styles.imageContainer}>
-                <Image
-                    source={planImages[id as keyof typeof planImages]}
-                    style={styles.floorPlanImage}
-                    contentFit="contain"
-                />
+                <View
+                    style={styles.imageWrapper}
+                    {...panResponder.current.panHandlers}
+                >
+                    <Image
+                        source={planImages[id as keyof typeof planImages]}
+                        style={[
+                            styles.floorPlanImage,
+                            {
+                                transform: [
+                                    { scale: zoomScale },
+                                    { translateX: panOffset.x },
+                                    { translateY: panOffset.y },
+                                ],
+                            },
+                        ]}
+                        contentFit="contain"
+                    />
+                </View>
             </ScrollView>
 
             {/* Bottom Dropdowns */}
@@ -272,6 +419,67 @@ const planImages = {
                     </View>
                 </View>
             </Modal>
+
+            {/* AI Modal */}
+            <Modal
+                visible={aiModalVisible}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setAiModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity
+                        style={styles.modalBackdrop}
+                        activeOpacity={1}
+                        onPress={() => setAiModalVisible(false)}
+                    />
+                    <View style={styles.aiModalContent}>
+                        <View style={styles.aiModalHeader}>
+                            <Text style={styles.aiModalTitle}>AI Assistant</Text>
+                            <TouchableOpacity onPress={() => setAiModalVisible(false)}>
+                                <Ionicons name="close" size={24} color="#ffffff" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <KeyboardAvoidingView
+                            style={styles.aiModalBody}
+                            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        >
+                            <FlatList
+                                data={aiMessages}
+                                keyExtractor={(item) => item.id}
+                                renderItem={renderAiMessage}
+                                style={styles.aiMessagesList}
+                                contentContainerStyle={styles.aiMessagesContainer}
+                                showsVerticalScrollIndicator={false}
+                            />
+
+                            <View style={styles.aiInputContainer}>
+                                <TextInput
+                                    style={styles.aiInput}
+                                    placeholder="Ask me about this floor plan..."
+                                    placeholderTextColor="#7a7f83"
+                                    value={aiInput}
+                                    onChangeText={setAiInput}
+                                    multiline
+                                    maxLength={1000}
+                                />
+                                <TouchableOpacity
+                                    style={[styles.aiSendButton, (!aiInput.trim() || aiLoading) && styles.aiSendButtonDisabled]}
+                                    onPress={sendAiMessage}
+                                    disabled={!aiInput.trim() || aiLoading}
+                                >
+                                    {aiLoading ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <Ionicons name="send" size={20} color="#fff" />
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </KeyboardAvoidingView>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -322,8 +530,10 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         flexGrow: 1,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
+        paddingTop: 0,
+        marginTop: -10,
     },
     floorPlanImage: {
         width: SCREEN_WIDTH,
@@ -580,5 +790,90 @@ const styles = StyleSheet.create({
         backgroundColor: '#8B0000',
         borderWidth: 2,
         borderColor: '#ffffff',
+    },
+    aiModalContent: {
+        backgroundColor: '#121417',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        height: '80%',
+        maxHeight: 600,
+        paddingBottom: 4,
+    },
+    aiModalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#1f1f1f',
+    },
+    aiModalTitle: {
+        color: '#8B0000',
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    aiModalBody: {
+        flex: 1,
+    },
+    aiMessagesList: {
+        flex: 1,
+    },
+    aiMessagesContainer: {
+        padding: 16,
+    },
+    aiMessage: {
+        maxWidth: '80%',
+        padding: 12,
+        borderRadius: 16,
+        marginBottom: 8,
+    },
+    userAiMessage: {
+        alignSelf: 'flex-end',
+        backgroundColor: '#8B0000',
+    },
+    assistantAiMessage: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#1f1f1f',
+    },
+    aiMessageText: {
+        color: '#ffffff',
+        fontSize: 16,
+    },
+    aiInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        padding: 16,
+        backgroundColor: '#1a1a1a',
+        borderTopWidth: 1,
+        borderTopColor: '#1f1f1f',
+    },
+    aiInput: {
+        flex: 1,
+        backgroundColor: '#2a2a2a',
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        color: '#ffffff',
+        fontSize: 16,
+        maxHeight: 100,
+        marginRight: 8,
+        borderWidth: 1,
+        borderColor: '#333',
+    },
+    aiSendButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#8B0000',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    aiSendButtonDisabled: {
+        backgroundColor: '#333',
+    },
+    imageWrapper: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

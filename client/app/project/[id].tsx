@@ -34,6 +34,7 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'forms', label: 'Forms', icon: 'form-select' },
     { id: 'files', label: 'Files', icon: 'folder-outline' },
     { id: 'people', label: 'People', icon: 'account-group-outline' },
+    { id: 'ai', label: 'AI Assistant', icon: 'robot' },
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
 
@@ -263,7 +264,11 @@ export default function ProjectHomeScreen() {
     };
 
     const handleMenuItemPress = (itemId: string) => {
-        setActiveSection(itemId);
+        if (itemId === 'ai') {
+            router.push('/ai');
+        } else {
+            setActiveSection(itemId);
+        }
         closeSidebar();
     };
 
