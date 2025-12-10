@@ -16,6 +16,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.75;
@@ -35,6 +36,7 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'files', label: 'Files', icon: 'folder-outline' },
     { id: 'people', label: 'People', icon: 'account-group-outline' },
     { id: 'ai', label: 'AI Assistant', icon: 'robot' },
+    { id: 'browser', label: 'Browser', icon: 'web' },
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
 
@@ -702,6 +704,15 @@ export default function ProjectHomeScreen() {
 
                         <Text style={styles.footerText}>To archive or delete your project, log in to CrowsNest on the web.</Text>
                     </ScrollView>
+                );
+            case 'browser':
+                return (
+                    <View style={styles.browserContainer}>
+                        <WebView
+                            source={{ uri: 'https://www.google.com' }}
+                            style={styles.webView}
+                        />
+                    </View>
                 );
             default:
                 return null;
@@ -2770,5 +2781,11 @@ const styles = StyleSheet.create({
     qrBtn: {
         marginLeft: 8,
         padding: 6,
+    },
+    browserContainer: {
+        flex: 1,
+    },
+    webView: {
+        flex: 1,
     },
 });
