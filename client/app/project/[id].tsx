@@ -134,6 +134,10 @@ export default function ProjectHomeScreen() {
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
 
+    const [browserSearchQuery, setBrowserSearchQuery] = useState('');
+    const [browserResults, setBrowserResults] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+
     const [projectSettings, setProjectSettings] = useState({
         name: name || 'Project Name',
         description: 'Project description',
@@ -272,6 +276,32 @@ export default function ProjectHomeScreen() {
             setActiveSection(itemId);
         }
         closeSidebar();
+    };
+
+    const performBrowserSearch = async () => {
+        if (!browserSearchQuery.trim()) return;
+
+        setIsSearching(true);
+        try {
+            const response = await fetch('http://localhost:3000/api/gemini/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: browserSearchQuery }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setBrowserResults(data.data.response);
+            } else {
+                setBrowserResults('Error: ' + data.error);
+            }
+        } catch (error) {
+            setBrowserResults('Error performing search: ' + error.message);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const renderContent = () => {
@@ -708,10 +738,39 @@ export default function ProjectHomeScreen() {
             case 'browser':
                 return (
                     <View style={styles.browserContainer}>
-                        <WebView
-                            source={{ uri: 'https://www.google.com' }}
-                            style={styles.webView}
-                        />
+                        <View style={styles.browserSearchContainer}>
+                            <View style={styles.browserSearchBar}>
+                                <TextInput
+                                    placeholder='Ask AI to search the web (e.g., "find cheapest 2\" schedule 40 pipe")'
+                                    placeholderTextColor="#aaa"
+                                    value={browserSearchQuery}
+                                    onChangeText={setBrowserSearchQuery}
+                                    style={styles.browserSearchInput}
+                                    multiline
+                                />
+                                <TouchableOpacity
+                                    style={[styles.browserSearchIconButton, isSearching && styles.browserSearchIconButtonDisabled]}
+                                    onPress={performBrowserSearch}
+                                    disabled={isSearching}
+                                >
+                                    <MaterialCommunityIcons
+                                        name={isSearching ? "loading" : "magnify"}
+                                        size={20}
+                                        color="#fff"
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {browserResults ? (
+                            <ScrollView style={styles.browserResultsContainer}>
+                                <Text style={styles.browserResultsText}>{browserResults}</Text>
+                            </ScrollView>
+                        ) : (
+                            <WebView
+                                source={{ uri: 'https://www.google.com' }}
+                                style={styles.webView}
+                            />
+                        )}
                     </View>
                 );
             default:
@@ -2784,6 +2843,47 @@ const styles = StyleSheet.create({
     },
     browserContainer: {
         flex: 1,
+    },
+    browserSearchContainer: {
+        padding: 10,
+        backgroundColor: '#1a1a1a',
+        borderBottomWidth: 1,
+        borderBottomColor: '#333',
+    },
+    browserSearchBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#2a2a2a',
+        borderRadius: 25,
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+    },
+    browserSearchInput: {
+        flex: 1,
+        color: '#fff',
+        fontSize: 16,
+        paddingVertical: 0,
+        marginRight: 10,
+    },
+    browserSearchIconButton: {
+        backgroundColor: '#8B0000',
+        borderRadius: 20,
+        width: 32,
+        height: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    browserSearchIconButtonDisabled: {
+        backgroundColor: '#333',
+    },
+    browserResultsContainer: {
+        flex: 1,
+        padding: 10,
+    },
+    browserResultsText: {
+        color: '#fff',
+        fontSize: 16,
+        lineHeight: 24,
     },
     webView: {
         flex: 1,
