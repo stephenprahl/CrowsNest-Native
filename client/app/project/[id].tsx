@@ -35,7 +35,7 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'forms', label: 'Forms', icon: 'form-select' },
     { id: 'files', label: 'Files', icon: 'folder-outline' },
     { id: 'people', label: 'People', icon: 'account-group-outline' },
-    { id: 'ai', label: 'AI Assistant', icon: 'robot' },
+    { id: 'ai', label: 'Secretary', icon: 'robot' },
     { id: 'browser', label: 'Browser', icon: 'web' },
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
