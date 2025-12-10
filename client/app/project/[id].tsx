@@ -16,6 +16,7 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.75;
@@ -35,6 +36,7 @@ const MENU_ITEMS: MenuItem[] = [
     { id: 'files', label: 'Files', icon: 'folder-outline' },
     { id: 'people', label: 'People', icon: 'account-group-outline' },
     { id: 'ai', label: 'AI Assistant', icon: 'robot' },
+    { id: 'browser', label: 'Browser', icon: 'web' },
     { id: 'settings', label: 'Settings', icon: 'cog-outline' },
 ];
 
@@ -131,6 +133,10 @@ export default function ProjectHomeScreen() {
     const [tasksQuery, setTasksQuery] = useState('');
     const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
     const textInputRef = useRef<TextInput>(null);
+
+    const [browserSearchQuery, setBrowserSearchQuery] = useState('');
+    const [browserResults, setBrowserResults] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     const [projectSettings, setProjectSettings] = useState({
         name: name || 'Project Name',
@@ -270,6 +276,32 @@ export default function ProjectHomeScreen() {
             setActiveSection(itemId);
         }
         closeSidebar();
+    };
+
+    const performBrowserSearch = async () => {
+        if (!browserSearchQuery.trim()) return;
+
+        setIsSearching(true);
+        try {
+            const response = await fetch('http://localhost:3000/api/gemini/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: browserSearchQuery }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setBrowserResults(data.data.response);
+            } else {
+                setBrowserResults('Error: ' + data.error);
+            }
+        } catch (error) {
+            setBrowserResults('Error performing search: ' + error.message);
+        } finally {
+            setIsSearching(false);
+        }
     };
 
     const renderContent = () => {
@@ -703,6 +735,21 @@ export default function ProjectHomeScreen() {
                         <Text style={styles.footerText}>To archive or delete your project, log in to CrowsNest on the web.</Text>
                     </ScrollView>
                 );
+            case 'browser':
+                return (
+                    <View style={styles.browserContainer}>
+                        {browserResults ? (
+                            <ScrollView style={styles.browserResultsContainer}>
+                                <Text style={styles.browserResultsText}>{browserResults}</Text>
+                            </ScrollView>
+                        ) : (
+                            <WebView
+                                source={{ uri: 'https://www.google.com' }}
+                                style={styles.webView}
+                            />
+                        )}
+                    </View>
+                );
             default:
                 return null;
         }
@@ -712,7 +759,33 @@ export default function ProjectHomeScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header with hamburger menu */}
             <View style={styles.header}>
-                {(activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) || (activeSection === 'tasks' && tasksSearchOpen) ? (
+                {activeSection === 'browser' ? (
+                    <>
+                        <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
+                            <MaterialCommunityIcons name="menu" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <View style={styles.browserHeaderSearchBar}>
+                            <TextInput
+                                placeholder='Ask AI to search the web or perform tasks'
+                                placeholderTextColor="#aaa"
+                                value={browserSearchQuery}
+                                onChangeText={setBrowserSearchQuery}
+                                style={styles.browserHeaderSearchInput}
+                            />
+                            <TouchableOpacity
+                                style={[styles.browserHeaderSearchIconButton, isSearching && styles.browserHeaderSearchIconButtonDisabled]}
+                                onPress={performBrowserSearch}
+                                disabled={isSearching}
+                            >
+                                <MaterialCommunityIcons
+                                    name={isSearching ? "loading" : "magnify"}
+                                    size={18}
+                                    color="#fff"
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) || (activeSection === 'tasks' && tasksSearchOpen) ? (
                     <>
                         <TouchableOpacity onPress={() => {
                             if (activeSection === 'specifications') {
@@ -2770,5 +2843,48 @@ const styles = StyleSheet.create({
     qrBtn: {
         marginLeft: 8,
         padding: 6,
+    },
+    browserContainer: {
+        flex: 1,
+    },
+    browserHeaderSearchBar: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#2a2a2a',
+        borderRadius: 20,
+        marginHorizontal: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    browserHeaderSearchInput: {
+        flex: 1,
+        color: '#fff',
+        fontSize: 14,
+        paddingVertical: 0,
+        marginRight: 8,
+    },
+    browserHeaderSearchIconButton: {
+        backgroundColor: '#8B0000',
+        borderRadius: 16,
+        width: 32,
+        height: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    browserHeaderSearchIconButtonDisabled: {
+        backgroundColor: '#333',
+    },
+    browserResultsContainer: {
+        flex: 1,
+        padding: 10,
+    },
+    browserResultsText: {
+        color: '#fff',
+        fontSize: 16,
+        lineHeight: 24,
+    },
+    webView: {
+        flex: 1,
     },
 });

@@ -59,8 +59,32 @@ model FloorPlan {
   
   // Relations
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  annotations Annotation[]
   
   @@map("floor_plans")
+}
+
+// Annotation model
+model Annotation {
+  id        String     @id @default(cuid())
+  type      String     // marker, square, text, etc.
+  x         Float
+  y         Float
+  width     Float?
+  height    Float?
+  endX      Float?
+  endY      Float?
+  text      String?
+  color     String     @default("#8B0000")
+  distance  Int?
+  floorPlanId String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  // Relations
+  floorPlan FloorPlan  @relation(fields: [floorPlanId], references: [id], onDelete: Cascade)
+  
+  @@map("annotations")
 }
 
 // Person model (crew/workers on project)

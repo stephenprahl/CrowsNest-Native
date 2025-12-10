@@ -106,6 +106,28 @@ export const floorPlanController = {
         await floorPlanService.delete(id);
         return c.json({ success: true, message: 'Floor plan deleted' });
     },
+
+    async saveAnnotations(c: Context) {
+        const { id } = c.req.param();
+        const { annotations } = await c.req.json();
+
+        if (!id) {
+            return c.json({ success: false, error: 'Floor plan ID is required' }, 400);
+        }
+
+        await floorPlanService.saveAnnotations(id, annotations);
+        return c.json({ success: true, message: 'Annotations saved' });
+    },
+
+    async getAnnotations(c: Context) {
+        const { id } = c.req.param();
+        if (!id) {
+            return c.json({ success: false, error: 'Floor plan ID is required' }, 400);
+        }
+
+        const annotations = await floorPlanService.getAnnotations(id);
+        return c.json({ success: true, data: annotations });
+    },
 };
 
 // Person Controllers
