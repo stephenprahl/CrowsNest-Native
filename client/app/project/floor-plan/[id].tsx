@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -19,7 +19,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { geminiAPI } from '../../../api';
+import { floorPlanAPI, geminiAPI } from '../../../api';
+import { AppContext } from '../../../state/AppContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -34,6 +35,8 @@ const planImages = {
     '2': require('../../../assets/images/plan-2.jpg'),
 }; export default function FloorPlanScreen() {
     const { id, name, image } = useLocalSearchParams<{ id: string; name: string; image: string }>();
+    const context = useContext(AppContext);
+    const { userId } = context || {};
     const router = useRouter();
     const [filtersModalVisible, setFiltersModalVisible] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
@@ -45,6 +48,13 @@ const planImages = {
     const [aiMessages, setAiMessages] = useState<Message[]>([]);
     const [aiInput, setAiInput] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
+    const [showImagePreview, setShowImagePreview] = useState(false);
+    const [currentTool, setCurrentTool] = useState<string | null>(null);
+    const [annotations, setAnnotations] = useState<any[]>([]);
+    const [drawingSquare, setDrawingSquare] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+    const [drawingRuler, setDrawingRuler] = useState<{ startX: number; startY: number; endX: number; endY: number } | null>(null);
+    const [selectedColor, setSelectedColor] = useState('#8B0000');
+    const colors = ['#8B0000', '#0000FF', '#008000', '#FFFF00', '#FFA500'];
 
     // Zoom state
     const [zoomScale, setZoomScale] = useState(1);
@@ -53,6 +63,47 @@ const planImages = {
     const lastDistance = useRef(0);
     const lastCenter = useRef({ x: 0, y: 0 });
     const lastTapTime = useRef(0);
+
+    // Preview zoom state
+    const [previewZoomScale, setPreviewZoomScale] = useState(1);
+    const [previewPanOffset, setPreviewPanOffset] = useState({ x: 0, y: 0 });
+    const [previewIsZooming, setPreviewIsZooming] = useState(false);
+    const previewLastDistance = useRef(0);
+    const previewLastCenter = useRef({ x: 0, y: 0 });
+    const previewLastTapTime = useRef(0);
+
+    // Load annotations on mount
+    useEffect(() => {
+        const loadAnnotations = async () => {
+            if (userId && id) {
+                try {
+                    const response = await floorPlanAPI.getAnnotations(id);
+                    if (response.success && response.data) {
+                        setAnnotations(response.data);
+                    }
+                } catch (error) {
+                    console.error('Failed to load annotations:', error);
+                }
+            }
+        };
+        loadAnnotations();
+    }, [userId, id]);
+
+    // Save annotations when they change
+    useEffect(() => {
+        const saveAnnotations = async () => {
+            if (userId && id && annotations.length > 0) {
+                try {
+                    await floorPlanAPI.saveAnnotations(id, annotations);
+                } catch (error) {
+                    console.error('Failed to save annotations:', error);
+                }
+            }
+        };
+        // Debounce save
+        const timeout = setTimeout(saveAnnotations, 1000);
+        return () => clearTimeout(timeout);
+    }, [annotations, userId, id]);
 
     const sendAiMessage = async () => {
         if (!aiInput.trim() || aiLoading) return;
@@ -102,8 +153,130 @@ const planImages = {
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onMoveShouldSetPanResponder: () => true,
-            onPanResponderGrant: () => {
+            onPanResponderGrant: (evt) => {
                 setIsZooming(true);
+                if (currentTool === 'square') {
+                    const { locationX, locationY } = evt.nativeEvent;
+                    setDrawingSquare({ startX: locationX, startY: locationY, endX: locationX, endY: locationY });
+                }
+                if (currentTool === 'ruler') {
+                    const { locationX, locationY } = evt.nativeEvent;
+                    setDrawingRuler({ startX: locationX, startY: locationY, endX: locationX, endY: locationY });
+                }
+            },
+            onPanResponderMove: (evt, gestureState) => {
+                if (!currentTool) {
+                    if (gestureState.numberActiveTouches === 2) {
+                        // Pinch to zoom
+                        const touches = evt.nativeEvent.touches;
+                        const touch1 = touches[0];
+                        const touch2 = touches[1];
+
+                        const distance = Math.sqrt(
+                            Math.pow(touch2.pageX - touch1.pageX, 2) + Math.pow(touch2.pageY - touch1.pageY, 2)
+                        );
+
+                        const center = {
+                            x: (touch1.pageX + touch2.pageX) / 2,
+                            y: (touch1.pageY + touch2.pageY) / 2,
+                        };
+
+                        if (lastDistance.current > 0) {
+                            const scale = distance / lastDistance.current;
+                            const newScale = Math.max(0.5, Math.min(3, zoomScale * scale));
+                            setZoomScale(newScale);
+
+                            // Adjust pan offset based on center point
+                            const centerOffset = {
+                                x: center.x - SCREEN_WIDTH / 2,
+                                y: center.y - SCREEN_HEIGHT / 2,
+                            };
+                            setPanOffset(centerOffset);
+                        }
+
+                        lastDistance.current = distance;
+                        lastCenter.current = center;
+                    } else if (gestureState.numberActiveTouches === 1 && zoomScale > 1) {
+                        // Pan when zoomed in
+                        setPanOffset({
+                            x: panOffset.x + gestureState.dx,
+                            y: panOffset.y + gestureState.dy,
+                        });
+                    }
+                } else if (currentTool === 'square' && drawingSquare) {
+                    const { locationX, locationY } = evt.nativeEvent;
+                    setDrawingSquare(prev => prev ? { ...prev, endX: locationX, endY: locationY } : null);
+                } else if (currentTool === 'ruler' && drawingRuler) {
+                    const { locationX, locationY } = evt.nativeEvent;
+                    setDrawingRuler(prev => prev ? { ...prev, endX: locationX, endY: locationY } : null);
+                }
+            },
+            onPanResponderRelease: (evt, gestureState) => {
+                setIsZooming(false);
+                lastDistance.current = 0;
+
+                if (drawingSquare) {
+                    // Finish drawing square
+                    setAnnotations(prev => [...prev, { 
+                        type: 'square', 
+                        x: drawingSquare.startX, 
+                        y: drawingSquare.startY, 
+                        width: drawingSquare.endX - drawingSquare.startX, 
+                        height: drawingSquare.endY - drawingSquare.startY,
+                        color: selectedColor
+                    }]);
+                    setDrawingSquare(null);
+                } else if (drawingRuler) {
+                    // Finish drawing ruler
+                    const distance = Math.sqrt(
+                        Math.pow(drawingRuler.endX - drawingRuler.startX, 2) + Math.pow(drawingRuler.endY - drawingRuler.startY, 2)
+                    );
+                    setAnnotations(prev => [...prev, { 
+                        type: 'ruler', 
+                        x: drawingRuler.startX, 
+                        y: drawingRuler.startY, 
+                        endX: drawingRuler.endX, 
+                        endY: drawingRuler.endY,
+                        distance: Math.round(distance),
+                        color: selectedColor
+                    }]);
+                    setDrawingRuler(null);
+                } else if (currentTool && gestureState.dx === 0 && gestureState.dy === 0) {
+                    // Handle tool tap
+                    const { locationX, locationY } = evt.nativeEvent;
+                    if (currentTool === 'marker') {
+                        setAnnotations(prev => [...prev, { type: 'marker', x: locationX, y: locationY, color: selectedColor }]);
+                    }
+                    if (currentTool === 'link') {
+                        setAnnotations(prev => [...prev, { type: 'link', x: locationX, y: locationY, color: selectedColor }]);
+                    }
+                    if (currentTool === 'toolbox') {
+                        setAnnotations(prev => [...prev, { type: 'toolbox', x: locationX, y: locationY, color: selectedColor }]);
+                    }
+                    if (currentTool === 'compass') {
+                        setAnnotations(prev => [...prev, { type: 'compass', x: locationX, y: locationY, color: selectedColor }]);
+                    }
+                    // Add other tools here
+                } else if (!currentTool) {
+                    // Handle double tap to reset zoom
+                    const now = Date.now();
+                    if (now - lastTapTime.current < 300) {
+                        setZoomScale(1);
+                        setPanOffset({ x: 0, y: 0 });
+                    }
+                    lastTapTime.current = now;
+                }
+            },
+        })
+    );
+
+    // Pan responder for preview zoom functionality
+    const previewPanResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onPanResponderGrant: () => {
+                setPreviewIsZooming(true);
             },
             onPanResponderMove: (evt, gestureState) => {
                 if (gestureState.numberActiveTouches === 2) {
@@ -121,40 +294,40 @@ const planImages = {
                         y: (touch1.pageY + touch2.pageY) / 2,
                     };
 
-                    if (lastDistance.current > 0) {
-                        const scale = distance / lastDistance.current;
-                        const newScale = Math.max(0.5, Math.min(3, zoomScale * scale));
-                        setZoomScale(newScale);
+                    if (previewLastDistance.current > 0) {
+                        const scale = distance / previewLastDistance.current;
+                        const newScale = Math.max(0.5, Math.min(3, previewZoomScale * scale));
+                        setPreviewZoomScale(newScale);
 
                         // Adjust pan offset based on center point
                         const centerOffset = {
                             x: center.x - SCREEN_WIDTH / 2,
                             y: center.y - SCREEN_HEIGHT / 2,
                         };
-                        setPanOffset(centerOffset);
+                        setPreviewPanOffset(centerOffset);
                     }
 
-                    lastDistance.current = distance;
-                    lastCenter.current = center;
-                } else if (gestureState.numberActiveTouches === 1 && zoomScale > 1) {
+                    previewLastDistance.current = distance;
+                    previewLastCenter.current = center;
+                } else if (gestureState.numberActiveTouches === 1 && previewZoomScale > 1) {
                     // Pan when zoomed in
-                    setPanOffset({
-                        x: panOffset.x + gestureState.dx,
-                        y: panOffset.y + gestureState.dy,
+                    setPreviewPanOffset({
+                        x: previewPanOffset.x + gestureState.dx,
+                        y: previewPanOffset.y + gestureState.dy,
                     });
                 }
             },
             onPanResponderRelease: (evt, gestureState) => {
-                setIsZooming(false);
-                lastDistance.current = 0;
+                setPreviewIsZooming(false);
+                previewLastDistance.current = 0;
 
                 // Handle double tap to reset zoom
                 const now = Date.now();
-                if (now - lastTapTime.current < 300) {
-                    setZoomScale(1);
-                    setPanOffset({ x: 0, y: 0 });
+                if (now - previewLastTapTime.current < 300) {
+                    setPreviewZoomScale(1);
+                    setPreviewPanOffset({ x: 0, y: 0 });
                 }
-                lastTapTime.current = now;
+                previewLastTapTime.current = now;
             },
         })
     );
@@ -228,6 +401,92 @@ const planImages = {
                         ]}
                         contentFit="contain"
                     />
+                    {annotations.map((annotation, index) => (
+                        <View
+                            key={index}
+                            style={{
+                                position: 'absolute',
+                                left: annotation.x - 12, // center the icon
+                                top: annotation.y - 24,
+                            }}
+                        >
+                            {annotation.type === 'marker' && (
+                                <MaterialCommunityIcons name="map-marker" size={24} color={annotation.color || '#8B0000'} />
+                            )}
+                            {annotation.type === 'square' && (
+                                <View
+                                    style={{
+                                        position: 'absolute',
+                                        left: annotation.x,
+                                        top: annotation.y,
+                                        width: Math.abs(annotation.width),
+                                        height: Math.abs(annotation.height),
+                                        borderWidth: 2,
+                                        borderColor: annotation.color || '#8B0000',
+                                        backgroundColor: 'transparent',
+                                    }}
+                                />
+                            )}
+                            {annotation.type === 'link' && (
+                                <MaterialCommunityIcons name="link" size={24} color={annotation.color || '#8B0000'} />
+                            )}
+                            {annotation.type === 'text' && (
+                                <Text style={{ position: 'absolute', left: annotation.x, top: annotation.y, color: annotation.color || '#8B0000', fontSize: 16 }}>
+                                    {annotation.text}
+                                </Text>
+                            )}
+                            {annotation.type === 'toolbox' && (
+                                <MaterialCommunityIcons name="toolbox" size={24} color={annotation.color || '#8B0000'} />
+                            )}
+                            {annotation.type === 'compass' && (
+                                <MaterialCommunityIcons name="compass" size={24} color={annotation.color || '#8B0000'} />
+                            )}
+                            {annotation.type === 'ruler' && (
+                                <View style={{ position: 'absolute', left: annotation.x, top: annotation.y }}>
+                                    <View
+                                        style={{
+                                            width: Math.abs(annotation.endX - annotation.x),
+                                            height: Math.abs(annotation.endY - annotation.y),
+                                            borderWidth: 1,
+                                            borderColor: annotation.color || '#8B0000',
+                                            backgroundColor: 'transparent',
+                                        }}
+                                    />
+                                    <Text style={{ position: 'absolute', left: (annotation.endX - annotation.x) / 2, top: (annotation.endY - annotation.y) / 2, color: annotation.color || '#8B0000', fontSize: 12 }}>
+                                        {annotation.distance}px
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    ))}
+                    {drawingSquare && (
+                        <View
+                            style={{
+                                position: 'absolute',
+                                left: drawingSquare.startX,
+                                top: drawingSquare.startY,
+                                width: Math.abs(drawingSquare.endX - drawingSquare.startX),
+                                height: Math.abs(drawingSquare.endY - drawingSquare.startY),
+                                borderWidth: 2,
+                                borderColor: selectedColor,
+                                backgroundColor: 'transparent',
+                            }}
+                        />
+                    )}
+                    {drawingRuler && (
+                        <View
+                            style={{
+                                position: 'absolute',
+                                left: Math.min(drawingRuler.startX, drawingRuler.endX),
+                                top: Math.min(drawingRuler.startY, drawingRuler.endY),
+                                width: Math.abs(drawingRuler.endX - drawingRuler.startX),
+                                height: Math.abs(drawingRuler.endY - drawingRuler.startY),
+                                borderWidth: 1,
+                                borderColor: selectedColor,
+                                backgroundColor: 'transparent',
+                            }}
+                        />
+                    )}
                 </View>
             </ScrollView>
 
@@ -266,37 +525,37 @@ const planImages = {
                     )}
                     {!rightCollapsed && (
                         <View style={styles.rightDropdownMenu}>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="map-marker" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'marker' ? null : 'marker')}>
+                                <MaterialCommunityIcons name="map-marker" size={24} color={currentTool === 'marker' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="link" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'link' ? null : 'link')}>
+                                <MaterialCommunityIcons name="link" size={24} color={currentTool === 'link' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="pencil" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'pencil' ? null : 'pencil')}>
+                                <MaterialCommunityIcons name="pencil" size={24} color={currentTool === 'pencil' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="square" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'square' ? null : 'square')}>
+                                <MaterialCommunityIcons name="square" size={24} color={currentTool === 'square' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="toolbox" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'toolbox' ? null : 'toolbox')}>
+                                <MaterialCommunityIcons name="toolbox" size={24} color={currentTool === 'toolbox' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="format-font-size-increase" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'text' ? null : 'text')}>
+                                <MaterialCommunityIcons name="format-font-size-increase" size={24} color={currentTool === 'text' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="ruler" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'ruler' ? null : 'ruler')}>
+                                <MaterialCommunityIcons name="ruler" size={24} color={currentTool === 'ruler' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <View style={styles.colorCircleIcon} />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setSelectedColor(colors[(colors.indexOf(selectedColor) + 1) % colors.length])}>
+                                <View style={[styles.colorCircleIcon, { backgroundColor: selectedColor }]} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <MaterialCommunityIcons name="compass" size={24} color="#fff" />
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setCurrentTool(currentTool === 'compass' ? null : 'compass')}>
+                                <MaterialCommunityIcons name="compass" size={24} color={currentTool === 'compass' ? '#8B0000' : '#fff'} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setAnnotations(prev => prev.slice(0, -1))}>
                                 <MaterialCommunityIcons name="undo" size={24} color="#fff" />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
+                            <TouchableOpacity style={styles.iconButton} onPress={() => setAnnotations([])}>
                                 <MaterialCommunityIcons name="delete" size={24} color="#8B0000" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.closeButton} onPress={() => setRightCollapsed(true)}>
@@ -436,15 +695,23 @@ const planImages = {
                     <View style={styles.aiModalContent}>
                         <View style={styles.aiModalHeader}>
                             <Text style={styles.aiModalTitle}>AI Assistant</Text>
-                            <TouchableOpacity onPress={() => setAiModalVisible(false)}>
-                                <Ionicons name="close" size={24} color="#ffffff" />
-                            </TouchableOpacity>
+                            <View style={styles.headerIcons}>
+                                <TouchableOpacity onPress={() => setShowImagePreview(true)}>
+                                    <Ionicons name="image" size={24} color="#ffffff" />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setAiModalVisible(false)}>
+                                    <Ionicons name="close" size={24} color="#ffffff" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
 
                         <KeyboardAvoidingView
                             style={styles.aiModalBody}
                             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                         >
+                            <View style={styles.aiInitialContainer}>
+                                <Image source={planImages[id as keyof typeof planImages]} style={styles.aiPlanImage} />
+                            </View>
                             <FlatList
                                 data={aiMessages}
                                 keyExtractor={(item) => item.id}
@@ -477,6 +744,57 @@ const planImages = {
                                 </TouchableOpacity>
                             </View>
                         </KeyboardAvoidingView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Image Preview Modal */}
+            <Modal
+                visible={showImagePreview}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowImagePreview(false)}
+            >
+                <View style={styles.previewOverlay}>
+                    <TouchableOpacity
+                        style={styles.previewBackdrop}
+                        activeOpacity={1}
+                        onPress={() => {
+                            setShowImagePreview(false);
+                            setPreviewZoomScale(1);
+                            setPreviewPanOffset({ x: 0, y: 0 });
+                        }}
+                    />
+                    <View style={styles.previewContent}>
+                        <View
+                            style={styles.previewImageWrapper}
+                            {...previewPanResponder.current.panHandlers}
+                        >
+                            <Image
+                                source={planImages[id as keyof typeof planImages]}
+                                style={[
+                                    styles.previewImage,
+                                    {
+                                        transform: [
+                                            { scale: previewZoomScale },
+                                            { translateX: previewPanOffset.x },
+                                            { translateY: previewPanOffset.y },
+                                        ],
+                                    },
+                                ]}
+                                contentFit="contain"
+                            />
+                        </View>
+                        <TouchableOpacity
+                            style={styles.previewClose}
+                            onPress={() => {
+                                setShowImagePreview(false);
+                                setPreviewZoomScale(1);
+                                setPreviewPanOffset({ x: 0, y: 0 });
+                            }}
+                        >
+                            <Ionicons name="close" size={24} color="#ffffff" />
+                        </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
@@ -648,11 +966,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
     },
-    bottomContainer: {
-        backgroundColor: '#1f1f1f',
-        borderRadius: 8,
-        overflow: 'hidden',
-    },
     lastMenuColumnItem: {
         borderBottomWidth: 0,
     },
@@ -812,6 +1125,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
     },
+    headerIcons: {
+        flexDirection: 'row',
+        gap: 16,
+    },
     aiModalBody: {
         flex: 1,
     },
@@ -870,6 +1187,55 @@ const styles = StyleSheet.create({
     },
     aiSendButtonDisabled: {
         backgroundColor: '#333',
+    },
+    aiInitialContainer: {
+        alignItems: 'center',
+        padding: 16,
+    },
+    aiPlanImage: {
+        width: 200,
+        height: 150,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+    aiPromptText: {
+        color: '#ffffff',
+        fontSize: 18,
+        textAlign: 'center',
+        fontWeight: '600',
+    },
+    previewOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    previewBackdrop: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    previewContent: {
+        alignItems: 'center',
+    },
+    previewImage: {
+        width: SCREEN_WIDTH * 0.9,
+        height: SCREEN_HEIGHT * 0.7,
+        borderRadius: 8,
+    },
+    previewClose: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        borderRadius: 20,
+        padding: 8,
+    },
+    previewImageWrapper: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     imageWrapper: {
         flex: 1,

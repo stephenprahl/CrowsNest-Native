@@ -32,4 +32,30 @@ export const floorPlanService = {
             where: { id },
         });
     },
+
+    // Save annotations for a floor plan
+    async saveAnnotations(floorPlanId: string, annotations: any[]) {
+        // Delete existing annotations
+        await prisma.annotation.deleteMany({
+            where: { floorPlanId },
+        });
+
+        // Create new annotations
+        const annotationData = annotations.map(annotation => ({
+            ...annotation,
+            floorPlanId,
+        }));
+
+        return await prisma.annotation.createMany({
+            data: annotationData,
+        });
+    },
+
+    // Get annotations for a floor plan
+    async getAnnotations(floorPlanId: string) {
+        return await prisma.annotation.findMany({
+            where: { floorPlanId },
+            orderBy: { createdAt: 'asc' },
+        });
+    },
 };

@@ -20,6 +20,24 @@ export interface FloorPlan {
     projectId: string;
     createdAt: string;
     updatedAt: string;
+    annotations?: Annotation[];
+}
+
+export interface Annotation {
+    id: string;
+    type: string;
+    x: number;
+    y: number;
+    width?: number;
+    height?: number;
+    endX?: number;
+    endY?: number;
+    text?: string;
+    color: string;
+    distance?: number;
+    floorPlanId: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Person {

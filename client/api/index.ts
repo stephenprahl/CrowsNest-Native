@@ -71,6 +71,14 @@ export const floorPlanAPI = {
     async delete(id: string) {
         return apiCall<void>(`/floor-plans/${id}`, 'DELETE');
     },
+
+    async saveAnnotations(id: string, annotations: any[]) {
+        return apiCall<void>(`/floor-plans/${id}/annotations`, 'POST', { annotations });
+    },
+
+    async getAnnotations(id: string) {
+        return apiCall<any[]>(`/floor-plans/${id}/annotations`, 'GET');
+    },
 };
 
 // Person API

@@ -141,8 +141,6 @@ export default function Index() {
           <>
             <View style={styles.headerLeft}>
               <Text style={styles.brand}>CROWSNEST</Text>
-              <Text style={styles.by}>BY</Text>
-              <Text style={styles.owner}>P&R TECH</Text>
             </View>
             <View style={styles.headerIcons}>
               <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.iconBtn}>
