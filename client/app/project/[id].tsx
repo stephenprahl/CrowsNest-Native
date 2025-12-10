@@ -738,29 +738,6 @@ export default function ProjectHomeScreen() {
             case 'browser':
                 return (
                     <View style={styles.browserContainer}>
-                        <View style={styles.browserSearchContainer}>
-                            <View style={styles.browserSearchBar}>
-                                <TextInput
-                                    placeholder='Ask AI to search the web (e.g., "find cheapest 2\" schedule 40 pipe")'
-                                    placeholderTextColor="#aaa"
-                                    value={browserSearchQuery}
-                                    onChangeText={setBrowserSearchQuery}
-                                    style={styles.browserSearchInput}
-                                    multiline
-                                />
-                                <TouchableOpacity
-                                    style={[styles.browserSearchIconButton, isSearching && styles.browserSearchIconButtonDisabled]}
-                                    onPress={performBrowserSearch}
-                                    disabled={isSearching}
-                                >
-                                    <MaterialCommunityIcons
-                                        name={isSearching ? "loading" : "magnify"}
-                                        size={20}
-                                        color="#fff"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
                         {browserResults ? (
                             <ScrollView style={styles.browserResultsContainer}>
                                 <Text style={styles.browserResultsText}>{browserResults}</Text>
@@ -782,7 +759,33 @@ export default function ProjectHomeScreen() {
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header with hamburger menu */}
             <View style={styles.header}>
-                {(activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) || (activeSection === 'tasks' && tasksSearchOpen) ? (
+                {activeSection === 'browser' ? (
+                    <>
+                        <TouchableOpacity onPress={openSidebar} style={styles.menuBtn}>
+                            <MaterialCommunityIcons name="menu" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <View style={styles.browserHeaderSearchBar}>
+                            <TextInput
+                                placeholder='Ask AI to search the web or perform tasks'
+                                placeholderTextColor="#aaa"
+                                value={browserSearchQuery}
+                                onChangeText={setBrowserSearchQuery}
+                                style={styles.browserHeaderSearchInput}
+                            />
+                            <TouchableOpacity
+                                style={[styles.browserHeaderSearchIconButton, isSearching && styles.browserHeaderSearchIconButtonDisabled]}
+                                onPress={performBrowserSearch}
+                                disabled={isSearching}
+                            >
+                                <MaterialCommunityIcons
+                                    name={isSearching ? "loading" : "magnify"}
+                                    size={18}
+                                    color="#fff"
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (activeSection === 'specifications' && searchOpen) || (activeSection === 'files' && filesSearchOpen) || (activeSection === 'tasks' && tasksSearchOpen) ? (
                     <>
                         <TouchableOpacity onPress={() => {
                             if (activeSection === 'specifications') {
@@ -2844,36 +2847,32 @@ const styles = StyleSheet.create({
     browserContainer: {
         flex: 1,
     },
-    browserSearchContainer: {
-        padding: 10,
-        backgroundColor: '#1a1a1a',
-        borderBottomWidth: 1,
-        borderBottomColor: '#333',
-    },
-    browserSearchBar: {
+    browserHeaderSearchBar: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#2a2a2a',
-        borderRadius: 25,
-        paddingHorizontal: 15,
+        borderRadius: 20,
+        marginHorizontal: 10,
+        paddingHorizontal: 12,
         paddingVertical: 8,
     },
-    browserSearchInput: {
+    browserHeaderSearchInput: {
         flex: 1,
         color: '#fff',
-        fontSize: 16,
+        fontSize: 14,
         paddingVertical: 0,
-        marginRight: 10,
+        marginRight: 8,
     },
-    browserSearchIconButton: {
+    browserHeaderSearchIconButton: {
         backgroundColor: '#8B0000',
-        borderRadius: 20,
+        borderRadius: 16,
         width: 32,
         height: 32,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    browserSearchIconButtonDisabled: {
+    browserHeaderSearchIconButtonDisabled: {
         backgroundColor: '#333',
     },
     browserResultsContainer: {
